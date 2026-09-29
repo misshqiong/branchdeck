@@ -51,3 +51,8 @@ logs/
 *.dmg
 *.zip
 *.tgz
+
+# Apple signing credentials and provisioning profiles
+*.p8
+*.provisionprofile
+*.mobileprovision

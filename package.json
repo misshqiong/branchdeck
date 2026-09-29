@@ -52,6 +52,8 @@
     },
     "asarUnpack": [
       "node_modules/node-pty/**/*"
-    ]
+    ],
+    "afterPack": "./scripts/sanitize-package.cjs",
+    "publish": null
   }
 }
