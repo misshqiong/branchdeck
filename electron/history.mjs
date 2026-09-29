@@ -91,18 +91,18 @@ export function classify(command,home=os.homedir()){
 }
 export function commandKey(cwd,command){return `${cwd}\0${JSON.stringify(words(command)?.map(t=>t.value)??command.trim())}`;}
 export class HistoryDiscovery{
- constructor({home=os.homedir(),environment=process.env}={}){this.home=home;this.environment=environment;this.extraFiles=[];this.scanId='';this.candidates=new Map();}
+ constructor({home=os.homedir(),environment=process.env,canAccess=()=>true}={}){this.canAccess=canAccess;this.home=home;this.environment=environment;this.extraFiles=[];this.scanId='';this.candidates=new Map();}
  sources(){
   const list=[path.join(this.home,'.zsh_history'),path.join(this.home,'.bash_history')];
   if(this.environment.HISTFILE&&path.isAbsolute(this.environment.HISTFILE))list.unshift(this.environment.HISTFILE);
   // Read only literal HISTFILE assignments, never source shell configuration.
   for(const name of ['.zshenv','.zshrc','.bashrc','.bash_profile']){
-   try{const file=path.join(this.home,name);if(fs.statSync(file).size>256000)continue;
+   try{const file=path.join(this.home,name);if(!this.canAccess(file))continue;if(fs.statSync(file).size>256000)continue;
     for(const line of fs.readFileSync(file,'utf8').split('\n')){const m=line.match(/^\s*(?:export\s+)?HISTFILE=(?:"([^"]*)"|'([^']*)'|([^\s#]+))\s*(?:#.*)?$/);if(!m)continue;let value=(m[1]??m[2]??m[3]).replace(/^\$\{?HOME\}?\//,this.home+'/').replace(/^~\//,this.home+'/');if(!value.includes('$')&&!value.includes('`')&&path.isAbsolute(value))list.push(value);}
    }catch{}
   }
-  try{const base=path.join(this.home,'.zsh_sessions');const files=fs.readdirSync(base).filter(n=>n.endsWith('.history')).map(n=>({file:path.join(base,n),mtime:fs.statSync(path.join(base,n)).mtimeMs})).sort((a,b)=>b.mtime-a.mtime).slice(0,12);list.push(...files.map(x=>x.file));}catch{}
-  list.unshift(...this.extraFiles);const seen=new Set();return list.filter(file=>{try{const real=fs.realpathSync(file);if(seen.has(real)||!fs.statSync(real).isFile())return false;seen.add(real);return true;}catch{return false;}}).slice(0,20);
+  try{const base=path.join(this.home,'.zsh_sessions');const files=(this.canAccess(base)?fs.readdirSync(base):[]).filter(n=>n.endsWith('.history')).map(n=>({file:path.join(base,n),mtime:fs.statSync(path.join(base,n)).mtimeMs})).sort((a,b)=>b.mtime-a.mtime).slice(0,12);list.push(...files.map(x=>x.file));}catch{}
+  list.unshift(...this.extraFiles);const seen=new Set();return list.filter(file=>{try{if(!this.canAccess(file))return false;const real=fs.realpathSync(file);if(seen.has(real)||!fs.statSync(real).isFile())return false;seen.add(real);return true;}catch{return false;}}).slice(0,20);
  }
  scan({limit=300}={}){
   const aggregate=new Map(),sources=[],warnings=[],workspaceRoots=new Set();let total=0,skipped=0,records=0;

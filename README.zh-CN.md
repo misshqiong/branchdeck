@@ -58,7 +58,11 @@ npm run pack
 open release/mac-arm64/BranchDeck.app
 ```
 
-以上路径适用于 Apple Silicon；Intel Mac 使用 `release/mac`。本地构建包未签名、公证。当前应用界面为中文，仓库同时提供中英文介绍。
+以上路径适用于 Apple Silicon；Intel Mac 使用 `release/mac`。打包使用 `CSC_NAME` 环境变量指定的 Developer ID Application 证书签名，需要本机钥匙串中安装对应证书和私钥；缺少证书会终止构建。
+
+运行 `npm run dist` 生成签名的 DMG 和 ZIP。Apple 公证需要另行配置凭据，未配置时产物只有签名、没有公证。详见[macOS 签名与打包](docs/macos-signing.md)。当前应用界面为中文，仓库同时提供中英文介绍。
+
+独立商店版使用 `npm run pack:mas:dev`（沙盒开发验收）和 `npm run pack:mas`（商店安装包），支持用户选择目录并保存授权。商店版的运行限制、签名材料和验收要求见 [Mac App Store 版本](docs/mac-app-store.md)。
 
 ## 日常怎么用？
 

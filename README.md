@@ -58,7 +58,11 @@ npm run pack
 open release/mac-arm64/BranchDeck.app
 ```
 
-The path above is for Apple Silicon; Intel builds use `release/mac`. Local builds are unsigned and not notarized. The app interface is currently in Chinese; this README provides an English introduction.
+The path above is for Apple Silicon; Intel builds use `release/mac`. Packaging requires the Developer ID Application certificate and private key in the local keychain; select it using the `CSC_NAME` environment variable. Builds fail if the signing identity is unavailable.
+
+Run `npm run dist` to create signed DMG and ZIP artifacts. Apple notarization requires separate credentials; without them, artifacts are signed but not notarized. See the [macOS signing and packaging guide (Chinese)](docs/macos-signing.md). The app interface is currently in Chinese; this README provides an English introduction.
+
+The separate store build uses `npm run pack:mas:dev` for sandbox testing and `npm run pack:mas` for a store installer. It supports user-selected locations and persistent access bookmarks. See the [Mac App Store build guide (Chinese)](docs/mac-app-store.md) for signing requirements and sandbox acceptance checks.
 
 ## A typical workflow
 

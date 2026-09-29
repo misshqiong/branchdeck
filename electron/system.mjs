@@ -30,8 +30,8 @@ export async function listeners(port) {
 export async function groupOf(pid) {
   try { return Number(await run('/bin/ps', ['-p', String(pid), '-o', 'pgid='])); } catch { return null; }
 }
-export async function loginEnvironment() {
-  const fallback = { ...process.env, PATH: `/opt/homebrew/bin:/usr/local/bin:${process.env.PATH || '/usr/bin:/bin:/usr/sbin:/sbin'}` };
+export async function loginEnvironment(overrides = {}) {
+  const fallback = { ...process.env, ...overrides, PATH: `/opt/homebrew/bin:/usr/local/bin:${process.env.PATH || '/usr/bin:/bin:/usr/sbin:/sbin'}` };
   try {
     const output = await run('/bin/zsh', ['-lc', '/usr/bin/env -0'], { timeout: 7000, env: fallback });
     const env = {};

@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, dialog, shell, Menu, Tray, nativeImage } f
 import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
+import {AccessStore, accessKinds} from './access.mjs';
 import {FolderTrash,within,checkLinkedWorktrees} from './folder-trash.mjs';
 import {WorkspaceCatalog} from './workspace-catalog.mjs';
 import {CommandCatalog} from './catalog.mjs';
@@ -15,28 +16,36 @@ import {TerminalSessions} from './sessions.mjs';
 import { Manager } from './manager.mjs';
 import { branchInfo, loginEnvironment, run } from './system.mjs';
 const directory = path.dirname(fileURLToPath(import.meta.url));
-app.setName('BranchDeck');
+const isStore = process.mas === true;
+app.setName(isStore ? 'BranchDeck Store' : 'BranchDeck');
 if (process.env.BRANCHDECK_DATA_DIR) app.setPath('userData', process.env.BRANCHDECK_DATA_DIR);
 if (!app.requestSingleInstanceLock()) app.quit();
 else bootstrap().catch(error => { dialog.showErrorBox('BranchDeck 启动失败', error.message); app.exit(1); });
 async function bootstrap() {
   await app.whenReady();
   const dataDirectory = app.getPath('userData');
+  const realHome = process.env.BRANCHDECK_DISCOVERY_HOME || os.userInfo().homedir;
+  const access = new AccessStore({directory: dataDirectory, enabled: isStore, home: realHome, startAccessing: bookmark => app.startAccessingSecurityScopedResource(bookmark)});
+  access.restore();
+  app.on('will-quit', () => access.close());
   const store = new Store(dataDirectory);
-  const environment = await loginEnvironment();
+  let environment = await loginEnvironment(isStore ? {HOME: realHome} : {});
   const manager = new Manager(dataDirectory, environment);
   const shellEnvironment=process.env.BRANCHDECK_DISCOVERY_HOME?{...environment,HOME:process.env.BRANCHDECK_DISCOVERY_HOME,ZDOTDIR:process.env.BRANCHDECK_DISCOVERY_HOME,HISTFILE:path.join(process.env.BRANCHDECK_DISCOVERY_HOME,'.zsh_history')}:environment;
   const sessions=new TerminalSessions(dataDirectory,shellEnvironment,manager);
   const rootsFile = path.join(dataDirectory, 'scan-roots.json');
   let roots = []; try { roots = JSON.parse(fs.readFileSync(rootsFile, 'utf8')); } catch {}
-  const discoveryHome = process.env.BRANCHDECK_DISCOVERY_HOME || os.homedir();
-  const history = new HistoryDiscovery({home:discoveryHome,environment:process.env.BRANCHDECK_DISCOVERY_HOME?{}:environment});
-  const automaticHistory = new HistoryDiscovery({home:discoveryHome,environment:process.env.BRANCHDECK_DISCOVERY_HOME?{}:environment});
+  const discoveryHome = isStore ? realHome : process.env.BRANCHDECK_DISCOVERY_HOME || os.homedir();
+  const canAccess = target => access.allows(target);
+  const history = new HistoryDiscovery({home:discoveryHome,environment:process.env.BRANCHDECK_DISCOVERY_HOME?{}:environment,canAccess});
+  const automaticHistory = new HistoryDiscovery({home:discoveryHome,environment:process.env.BRANCHDECK_DISCOVERY_HOME?{}:environment,canAccess});
   const catalog=new CommandCatalog(dataDirectory);
   const workspaceCatalog=new WorkspaceCatalog(dataDirectory);
   let automaticCandidates=[],historyScannedAt=0,historyWarnings=[];
   const refreshHistory=()=>{const result=automaticHistory.scan({limit:2000});automaticCandidates=result.candidates;discovery.historyRoots=result.workspaceRoots;historyWarnings=result.warnings;historyScannedAt=Date.now();};
-  const discovery = new Discovery({ home: discoveryHome, codexHome: process.env.BRANCHDECK_DISCOVERY_HOME ? path.join(discoveryHome, '.codex') : process.env.CODEX_HOME || path.join(discoveryHome, '.codex'), claudeHome: process.env.BRANCHDECK_DISCOVERY_HOME ? path.join(discoveryHome, '.claude') : process.env.CLAUDE_CONFIG_DIR || path.join(discoveryHome, '.claude'), roots, metadata: process.env.BRANCHDECK_NO_DISCOVERY !== '1' });
+  const syncHistoryGrants=()=>{if(isStore){history.extraFiles=access.paths('history');automaticHistory.extraFiles=access.paths('history');}};
+  syncHistoryGrants();
+  const discovery = new Discovery({ canAccess, home: discoveryHome, codexHome: process.env.BRANCHDECK_DISCOVERY_HOME ? path.join(discoveryHome, '.codex') : process.env.CODEX_HOME || path.join(discoveryHome, '.codex'), claudeHome: process.env.BRANCHDECK_DISCOVERY_HOME ? path.join(discoveryHome, '.claude') : process.env.CLAUDE_CONFIG_DIR || path.join(discoveryHome, '.claude'), roots, metadata: process.env.BRANCHDECK_NO_DISCOVERY !== '1' });
   const allLaunchers = async id => { const w = discovery.get(id); const list = await launchersFor(w, store.configs); return matchHistory(w,automaticCandidates,[...list,...gitLaunchers(w).filter(g=>!list.some(c=>c.id===g.id))]).filter(l=>!l.detected||!store.configs.some(c=>c.id===l.id&&c.cwd!==l.cwd)); };
   const commandView=async id=>catalog.reconcile(discovery.get(id),await allLaunchers(id),store.configs);
   let scanning;
@@ -51,7 +60,7 @@ async function bootstrap() {
   });
   function awaitScan() { scan().catch(error => { discovery.result.warnings = [error.message]; broadcast(); }); }
   const configFor = id => { const config = store.configs.find(c => c.id === id); if (!config) throw new Error('配置不存在'); return config; };
-  handle('snapshot', async () => ({ configs: await Promise.all(store.configs.map(async c => ({ ...c, git: await branchInfo(c.cwd), exists: fs.existsSync(c.cwd) }))), runs: manager.list(), sessions:sessions.list(), commandRevision:catalog.revision, dataDirectory, historyScannedAt, historyWarnings, scanIntervalMinutes:5, discovery: workspaceCatalog.view(discovery.result) }));
+  handle('snapshot', async () => ({ access: access.snapshot(), configs: await Promise.all(store.configs.map(async c => ({ ...c, git: await branchInfo(c.cwd), exists: fs.existsSync(c.cwd) }))), runs: manager.list(), sessions:sessions.list(), commandRevision:catalog.revision, dataDirectory, historyScannedAt, historyWarnings, scanIntervalMinutes:5, discovery: workspaceCatalog.view(discovery.result) }));
   handle('discover', async () => {await scan();return workspaceCatalog.view(discovery.result);});
   handle('workspace-remove',(id,scope)=>{const entry=workspaceCatalog.remove(discovery.result.workspaces,id,scope);broadcast();return entry;});
   handle('workspace-restore',id=>{workspaceCatalog.restore(id);broadcast();});
@@ -62,10 +71,30 @@ async function bootstrap() {
   handle('command-restore',async(id,commandId)=>{const view=catalog.restore(discovery.get(id),await allLaunchers(id),commandId,store.configs);broadcast();return view;});
   handle('command-decide', async(id,commandId,decision)=>{const view=catalog.decide(discovery.get(id),await allLaunchers(id),commandId,decision,store.configs);broadcast();return view;});
   handle('history-scan', () => {refreshHistory();broadcast();return history.scan();});
+  const chooseAccess=async(kind, options, replacingId)=>{
+    const result=await dialog.showOpenDialog(window,{...options, ...(isStore?{securityScopedBookmarks:true}: {})});
+    access.accept(result,kind,replacingId);
+    return result;
+  };
+  handle('access-status',()=>access.snapshot());
+  handle('access-grant',async(kind,replacingId)=>{
+    if(!isStore||!accessKinds.includes(kind))throw new Error('当前版本不需要此授权');
+    const previous=access.entries.find(e=>e.id===replacingId);
+    if(replacingId&&(!previous||previous.kind!==kind))throw new Error('授权记录已变化');
+    const defaults={workspace:path.join(realHome,'Documents'),metadata:path.join(realHome,'.codex'),history:path.join(realHome,'.zsh_history'),shell:path.join(realHome,'.zshrc'),ssh:path.join(realHome,'.ssh'),tools:'/opt/homebrew',home:realHome};
+    const directories=['workspace','tools','home'].includes(kind);
+    const result=await chooseAccess(kind,{title:'选择要授权给 BranchDeck 的'+({workspace:'项目目录',metadata:'项目索引',history:'历史文件',shell:'Shell 配置',ssh:'SSH 文件',tools:'工具链目录',home:'个人目录'}[kind]),defaultPath:previous?.path||defaults[kind],properties:[...(directories?['openDirectory']:kind==='history'?['openFile']:['openFile','openDirectory']),'showHiddenFiles']},replacingId);
+    if(result.canceled)return access.snapshot();
+    if(kind==='workspace'){const root=fs.realpathSync(result.filePaths[0]);if(!discovery.roots.includes(root))discovery.roots.push(root);atomicJson(rootsFile,discovery.roots);}
+    syncHistoryGrants();
+    environment=await loginEnvironment({HOME:realHome});manager.environment=environment;sessions.environment=environment;history.environment=environment;automaticHistory.environment=environment;
+    await scan();broadcast();return access.snapshot();
+  });
+  handle('access-forget',id=>{if(!isStore)throw new Error('当前版本不需要此授权');access.forget(id);broadcast();return access.snapshot();});
   handle('history-file', async () => {
-    const result=await dialog.showOpenDialog(window,{properties:['openFile','showHiddenFiles'],title:'选择 Shell 历史文件'});
+    const result=await chooseAccess('history',{properties:['openFile','showHiddenFiles'],title:'选择 Shell 历史文件'});
     if(result.canceled)return null;
-    history.extraFiles=[result.filePaths[0]];automaticHistory.extraFiles=[result.filePaths[0]];refreshHistory();broadcast();return history.scan();
+    if(isStore)syncHistoryGrants();else{history.extraFiles=[result.filePaths[0]];automaticHistory.extraFiles=[result.filePaths[0]];}refreshHistory();broadcast();return history.scan();
   });
   handle('history-import', async (scanId,selections) => {
     if(quitDialog||quitting)throw new Error('正在退出，请稍后导入');
@@ -75,7 +104,7 @@ async function bootstrap() {
     return {imported:configs.length,skipped};
   });
   handle('folders', (id, relative) => discovery.folders(id, relative));
-  handle('add-root', async () => { const result = await dialog.showOpenDialog(window, { properties: ['openDirectory'], title: '添加工作区或包含多个项目的目录' }); if (result.canceled) return null; const root = fs.realpathSync(result.filePaths[0]); if (!discovery.roots.includes(root)) discovery.roots.push(root); atomicJson(rootsFile, discovery.roots); await scan(); workspaceCatalog.revive(root,discovery.result.workspaces); broadcast(); return root; });
+  handle('add-root', async () => { const result = await chooseAccess('workspace', { properties: ['openDirectory'], title: '添加工作区或包含多个项目的目录' }); if (result.canceled) return null; const root = fs.realpathSync(result.filePaths[0]); if (!discovery.roots.includes(root)) discovery.roots.push(root); atomicJson(rootsFile, discovery.roots); await scan(); workspaceCatalog.revive(root,discovery.result.workspaces); broadcast(); return root; });
   handle('workspace-open', id => openPath(discovery.get(id).path));
   const folderTrash=new FolderTrash({
     protectedPaths:[os.homedir(),discoveryHome,dataDirectory,app.getAppPath()],
@@ -145,7 +174,7 @@ async function bootstrap() {
   handle('terminal-input', (id, runId, data) => manager.input(id, runId, data));
   handle('terminal-resize', (id, runId, cols, rows) => manager.resize(id, runId, cols, rows));
   handle('logs', id => { configFor(id); return manager.tail(id); });
-  handle('pick-directory', async () => { const result = await dialog.showOpenDialog(window, { properties: ['openDirectory', 'createDirectory'], title: '选择代码工作目录' }); return result.canceled ? null : result.filePaths[0]; });
+  handle('pick-directory', async () => { const result = await chooseAccess('workspace', { properties: ['openDirectory', 'createDirectory'], title: '选择代码工作目录' }); return result.canceled ? null : result.filePaths[0]; });
   const openPath = async target => { const error = await shell.openPath(target); if (error) throw new Error(error); };
   handle('open-directory', id => openPath(configFor(id).cwd));
   handle('open-log', id => { configFor(id); const current = manager.get(id); if (current && fs.existsSync(current.logPath)) shell.showItemInFolder(current.logPath); else throw new Error('尚无运行日志'); });

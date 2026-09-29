@@ -5,8 +5,10 @@ import { createHash } from 'node:crypto';
 import { run, branchInfo } from './system.mjs';
 const ignored = new Set(['node_modules', '.git', '.claude', '.codex', 'dist', 'build', 'target', 'coverage', 'release', '.next', '.venv', 'venv', 'vendor', 'Pods', '.gradle', '.cache']);
 const idFor = value => createHash('sha256').update(value).digest('hex').slice(0, 20);
-const entries = directory => { try { return fs.readdirSync(directory, { withFileTypes: true }); } catch { return []; } };
-function json(file, fallback = {}) { try { if (fs.statSync(file).size > 8 * 1024 * 1024) return fallback; return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; } }
+const globalEntries = directory => { try { return fs.readdirSync(directory, { withFileTypes: true }); } catch { return []; } };
+function globalJson(file, fallback = {}) { try { if (fs.statSync(file).size > 8 * 1024 * 1024) return fallback; return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return fallback; } }
+const entries = globalEntries;
+const json = globalJson;
 function canonical(directory) { try { return typeof directory === 'string' && path.isAbsolute(directory) && fs.statSync(directory).isDirectory() ? fs.realpathSync(directory) : null; } catch { return null; } }
 function projectMarker(directory) { return ['.git', 'package.json', 'pom.xml', 'Makefile', 'pyproject.toml', 'Cargo.toml', 'go.mod'].some(f => fs.existsSync(path.join(directory, f))); }
 async function limited(items, fn, concurrency = 5) { let i = 0; const result = new Array(items.length); await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, async () => { while (i < items.length) { const index = i++; result[index] = await fn(items[index]); } })); return result; }
@@ -20,8 +22,8 @@ export function parseWorktrees(output) {
   return result;
 }
 export class Discovery {
-  constructor({ home = os.homedir(), codexHome = process.env.CODEX_HOME || path.join(home, '.codex'), claudeHome = process.env.CLAUDE_CONFIG_DIR || path.join(home, '.claude'), roots = [], metadata = true } = {}) {
-    this.home = home; this.codexHome = codexHome; this.claudeHome = claudeHome; this.roots = roots; this.metadata = metadata; this.historyRoots=[];
+  constructor({ home = os.homedir(), codexHome = process.env.CODEX_HOME || path.join(home, '.codex'), claudeHome = process.env.CLAUDE_CONFIG_DIR || path.join(home, '.claude'), roots = [], metadata = true, canAccess = () => true } = {}) {
+    this.canAccess = canAccess; this.home = home; this.codexHome = codexHome; this.claudeHome = claudeHome; this.roots = roots; this.metadata = metadata; this.historyRoots=[];
     this.result = { workspaces: [], scannedAt: null, warnings: [], scanning: false }; this.pending = null;
   }
   async scan(configs = []) {
@@ -31,8 +33,12 @@ export class Discovery {
     return this.pending;
   }
   async collect(configs) {
+    const allowed = target => this.canAccess(target);
+    const entries = directory => allowed(directory) ? globalEntries(directory) : [];
+    const json = (file, fallback = {}) => allowed(file) ? globalJson(file, fallback) : fallback;
     const candidates = new Map(), warnings = []; let rootLabels = {};
     const add = (directory, source, updated = 0, explicit = false) => {
+      if (!allowed(directory)) return;
       const cwd = canonical(directory); if (!cwd || cwd === this.home || cwd === '/') return;
       if (!explicit && !projectMarker(cwd)) return;
       const existing = candidates.get(cwd) || { path: cwd, sources: new Set(), updatedAt: 0 };
@@ -93,7 +99,7 @@ export class Discovery {
     if (candidates.size > 350) warnings.push('目录数量超过单次 350 个上限；可添加具体目录缩小范围。');
     const workspaces = new Map();
     const inspect = async c => {
-      const git = await branchInfo(c.path); const root = canonical(git.root) || c.path;
+      const git = await branchInfo(c.path); const root = (allowed(git.root) && canonical(git.root)) || c.path;
       let common = root;
       if (git.commit) { try { common = canonical(path.resolve(c.path, await run('/usr/bin/git', ['-C', c.path, 'rev-parse', '--git-common-dir']))) || root; } catch {} }
       const old = workspaces.get(root);
@@ -106,6 +112,7 @@ export class Discovery {
       try {
         const children = parseWorktrees(await run('/usr/bin/git', ['-C', parent.path, 'worktree', 'list', '--porcelain', '-z']));
         await limited(children, async child => {
+          if(!allowed(child.path))return;
           const root = canonical(child.path); if (!root) return;
           const source = root.includes(`${path.sep}.claude${path.sep}worktrees${path.sep}`) ? 'Claude Code' : root.startsWith(path.join(this.codexHome, 'worktrees') + path.sep) ? 'Codex' : 'Git worktree';
           if (!workspaces.has(root)) await inspect({ path: root, sources: new Set([source]), updatedAt: 0 });

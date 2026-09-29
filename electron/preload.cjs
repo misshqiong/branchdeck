@@ -1,6 +1,9 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const invoke = (channel, ...args) => ipcRenderer.invoke(channel, ...args).then(result => { if (!result.ok) throw new Error(result.error); return result.value; });
 contextBridge.exposeInMainWorld('branchdeck', {
+  accessStatus: () => invoke('access-status'),
+  accessGrant: (kind,id) => invoke('access-grant',kind,id),
+  accessForget: id => invoke('access-forget',id),
   sessionEnsure: id=>invoke('session-ensure',id),
   sessionCreate: (id,relative)=>invoke('session-create',id,relative),
   sessionSend: (id,launcherId,sessionId,fillOnly)=>invoke('session-send',id,launcherId,sessionId,fillOnly),

@@ -1,7 +1,7 @@
 {
   "name": "branchdeck",
   "productName": "BranchDeck",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "以工作区组织快捷命令与交互终端的本地开发工具",
   "private": true,
   "type": "module",
@@ -12,7 +12,9 @@
     "start": "electron .",
     "test": "node --test test/*.test.mjs",
     "pack": "npm run build && electron-builder --mac dir",
-    "dist": "npm run build && electron-builder --mac zip",
+    "dist": "npm run build && electron-builder --mac dmg zip",
+    "pack:mas:dev": "npm run build && BRANCHDECK_MAS_MODE=development electron-builder --config electron-builder.mas.cjs --mac mas-dev",
+    "pack:mas": "npm run build && electron-builder --config electron-builder.mas.cjs --mac mas",
     "postinstall": "node scripts/prepare-pty.mjs"
   },
   "dependencies": {
@@ -35,6 +37,7 @@
   "build": {
     "appId": "local.branchdeck.app",
     "productName": "BranchDeck",
+    "forceCodeSigning": true,
     "directories": {
       "output": "release"
     },
@@ -46,9 +49,15 @@
     ],
     "mac": {
       "category": "public.app-category.developer-tools",
-      "identity": null,
+      "type": "distribution",
+      "hardenedRuntime": true,
+      "entitlements": "assets/entitlements.mac.plist",
+      "entitlementsInherit": "assets/entitlements.mac.plist",
       "icon": "assets/icon.icns",
       "target": "dir"
+    },
+    "dmg": {
+      "sign": true
     },
     "asarUnpack": [
       "node_modules/node-pty/**/*"

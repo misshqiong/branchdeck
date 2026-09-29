@@ -8,11 +8,14 @@ export type DiscoveryResult = {removed?:RemovedWorkspace[]; workspaces:Workspace
 export type CommandView = {commands:Launcher[];suggestions:Launcher[];removed:Launcher[]};
 export type Session = {id:string;workspaceId:string;name:string;kind:'shell'|'service';cwd:string;status:string;busy:boolean;draft:boolean;configId:string|null;runId:string|null;pid:number|null};
 export type SessionEvent = {sessionId:string;sequence:number;data:string};
-export type Snapshot = {commandRevision?:number;sessions:Session[]; historyWarnings?:string[];scanIntervalMinutes?:number; historyScannedAt?:number; configs:Config[]; runs:Run[]; dataDirectory:string; discovery:DiscoveryResult };
+export type AccessKind = 'workspace'|'metadata'|'history'|'shell'|'ssh'|'tools'|'home';
+export type AccessStatus = {enabled:boolean;warning:string;entries:{id:string;path:string;kind:AccessKind;active:boolean;pendingRemoval:boolean;error:string}[]};
+export type Snapshot = {access?:AccessStatus;commandRevision?:number;sessions:Session[]; historyWarnings?:string[];scanIntervalMinutes?:number; historyScannedAt?:number; configs:Config[]; runs:Run[]; dataDirectory:string; discovery:DiscoveryResult };
 export type TerminalEvent = {configId:string;runId:string;sequence:number;data:string};
 export type HistoryCandidate = {id:string;command:string;name:string;cwd:string|null;kind:'service'|'task';category:string;count:number;lastUsed:number|null;sources:string[];directoryEvidence:string;requiresConfirm:boolean};
 export type HistoryResult = {scanId:string;candidates:HistoryCandidate[];sources:{path:string;name:string;records:number}[];warnings:string[];skipped:number;records:number};
 export type Bridge = {
+ accessStatus():Promise<AccessStatus>;accessGrant(kind:AccessKind,id?:string):Promise<AccessStatus>;accessForget(id:string):Promise<AccessStatus>;
  sessionEnsure(id:string):Promise<Session>;sessionCreate(id:string,relative?:string):Promise<Session>;sessionSend(id:string,launcherId:string,sessionId?:string,fillOnly?:boolean):Promise<Session>;
  sessionSnapshot(id:string):Promise<{sequence:number;data:string}>;sessionInput(id:string,data:string):Promise<void>;sessionResize(id:string,cols:number,rows:number):Promise<void>;sessionInterrupt(id:string):Promise<void>;sessionClose(id:string,confirmed?:boolean):Promise<{requiresConfirm:boolean}>;
  filePreview(id:string,relative:string):Promise<{path:string;content:string}>;onSessionData(callback:(event:SessionEvent)=>void):()=>void;
