@@ -1,7 +1,7 @@
 {
   "name": "branchdeck",
   "productName": "BranchDeck",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "description": "以工作区组织快捷命令与交互终端的本地开发工具",
   "private": true,
   "type": "module",

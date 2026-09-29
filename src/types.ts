@@ -17,6 +17,7 @@ export type Bridge = {
  sessionSnapshot(id:string):Promise<{sequence:number;data:string}>;sessionInput(id:string,data:string):Promise<void>;sessionResize(id:string,cols:number,rows:number):Promise<void>;sessionInterrupt(id:string):Promise<void>;sessionClose(id:string,confirmed?:boolean):Promise<{requiresConfirm:boolean}>;
  filePreview(id:string,relative:string):Promise<{path:string;content:string}>;onSessionData(callback:(event:SessionEvent)=>void):()=>void;
 
+ folderTrash(id:string,relative?:string):Promise<{deleted:boolean;path:string}>;
  workspaceRemove(id:string,scope:'workspace'|'group'):Promise<RemovedWorkspace>;workspaceRestore(id:string):Promise<void>;
  commandMove(id:string,commandId:string,targetId:string,after:boolean):Promise<CommandView>;commandRemove(id:string,commandId:string):Promise<CommandView>;commandRestore(id:string,commandId:string):Promise<CommandView>;
  commandView(id:string):Promise<CommandView>;commandDecide(id:string,commandId:string,decision:"accept"|"dismiss"):Promise<CommandView>;

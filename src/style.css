@@ -44,3 +44,13 @@ main{display:flex;flex:1;min-width:0;min-height:0;overflow:hidden}.action-column
 .removed-workspaces summary{cursor:pointer;padding:6px 0}
 .removed-workspaces>div{display:flex;align-items:center;gap:5px;padding:4px 0}
 .removed-workspaces>div>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.workspace-actions{position:absolute;right:3px;display:flex;opacity:0;background:#f1f5ec;border-radius:5px}
+.workspace-actions>.icon{padding:5px;color:#819276}.workspace-actions>.icon:last-child:hover{color:#b55f4d}
+.workspace-entry:hover .workspace-actions,.workspace-entry:focus-within .workspace-actions{opacity:1}
+.workspace-entry:hover .workspace-row,.workspace-entry:focus-within .workspace-row{padding-right:54px}
+.folder-row-actions{display:flex;align-items:center;flex-shrink:0;opacity:0}
+.file-entry:hover .folder-row-actions,.file-entry:focus-within .folder-row-actions{opacity:1}
+.folder-row-actions .folder-terminal{opacity:1;position:static}.folder-delete{color:#a17d6b;padding:5px}
+.folder-context-menu{padding:3px 0}.folder-context-menu .folder-context{width:100%;margin:0;border-radius:0}
+.file-notice{position:fixed;bottom:22px;right:20px;z-index:95;background:white;border:1px solid #d7e1cf;border-radius:9px;padding:12px;box-shadow:0 5px 25px #24321c20;display:flex;align-items:center;gap:12px;max-width:620px;font-size:12px;color:#526e42}
+.file-notice>span{overflow-wrap:anywhere;min-width:0}.file-notice>.icon{flex-shrink:0}

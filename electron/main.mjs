@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, dialog, shell, Menu, Tray, nativeImage } f
 import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
+import {FolderTrash,within,checkLinkedWorktrees} from './folder-trash.mjs';
 import {WorkspaceCatalog} from './workspace-catalog.mjs';
 import {CommandCatalog} from './catalog.mjs';
 import {matchHistory} from './history-workspace.mjs';
@@ -39,7 +40,7 @@ async function bootstrap() {
   const allLaunchers = async id => { const w = discovery.get(id); const list = await launchersFor(w, store.configs); return matchHistory(w,automaticCandidates,[...list,...gitLaunchers(w).filter(g=>!list.some(c=>c.id===g.id))]).filter(l=>!l.detected||!store.configs.some(c=>c.id===l.id&&c.cwd!==l.cwd)); };
   const commandView=async id=>catalog.reconcile(discovery.get(id),await allLaunchers(id),store.configs);
   let scanning;
-  const scan = () => scanning ||= (async()=>{refreshHistory();const promise=discovery.scan(store.configs);broadcast();const result=await promise;broadcast();return result;})().finally(()=>{scanning=null;});
+  const scan = () => folderTrash.busy?Promise.resolve(discovery.result):(scanning ||= (async()=>{refreshHistory();const promise=discovery.scan(store.configs);broadcast();const result=await promise;broadcast();return result;})().finally(()=>{scanning=null;}));
   let window, tray, quitting = false, quitDialog = false;
   const rendererURL = process.env.BRANCHDECK_DEV_URL || pathToFileURL(path.join(directory, '../dist/index.html')).href;
   function show() { if (window) { window.show(); window.focus(); } }
@@ -76,9 +77,30 @@ async function bootstrap() {
   handle('folders', (id, relative) => discovery.folders(id, relative));
   handle('add-root', async () => { const result = await dialog.showOpenDialog(window, { properties: ['openDirectory'], title: '添加工作区或包含多个项目的目录' }); if (result.canceled) return null; const root = fs.realpathSync(result.filePaths[0]); if (!discovery.roots.includes(root)) discovery.roots.push(root); atomicJson(rootsFile, discovery.roots); await scan(); workspaceCatalog.revive(root,discovery.result.workspaces); broadcast(); return root; });
   handle('workspace-open', id => openPath(discovery.get(id).path));
+  const folderTrash=new FolderTrash({
+    protectedPaths:[os.homedir(),discoveryHome,dataDirectory,app.getAppPath()],
+    linked:async target=>{for(const directory of new Set([target,...discovery.result.workspaces.filter(w=>within(target,w.path)).map(w=>w.path)]))await checkLinkedWorktrees(directory);},
+    related:target=>{
+      const matches=sessions.list().filter(s=>within(target,s.cwd)||discovery.result.workspaces.some(w=>w.id===s.workspaceId&&within(target,w.path))).map(s=>({...s,type:'session'}));
+      for(const r of manager.list())if(manager.isActive(r.configId)&&within(target,r.cwd)&&!matches.some(s=>s.configId===r.configId))matches.push({id:r.configId,pid:r.pid,name:configFor(r.configId).name,type:'run'});
+      return matches;
+    },
+    confirm:async(target,related)=>{const answer=await dialog.showMessageBox(window,{type:'warning',buttons:['取消',related.length?'关闭相关终端并移到废纸篓':'移到废纸篓'],defaultId:0,cancelId:0,message:`删除文件夹「${path.basename(target)}」？`,detail:`将把下面的文件夹及其全部内容移到系统废纸篓：\n${target}\n\n${related.length?`将关闭 ${related.length} 个相关终端或服务：${related.map(s=>s.name).join('、')}。未保存的终端输入将丢失。\n`:''}需要恢复时，请在 Finder 的废纸篓中放回原位置。`});return answer.response===1;},
+    close:item=>item.type==='session'?sessions.close(item.id):manager.stop(item.id),
+    trash:target=>shell.trashItem(target)
+  });
+  handle('folder-trash',async(id,relative='')=>{
+    if(quitting||quitDialog||manager.pending.size||sessions.initializing.size)throw new Error('有程序正在启动或退出，请稍后删除');
+    if(scanning)await scanning;
+    const result=await folderTrash.delete(discovery.get(id).path,relative);
+    if(result.deleted){if(scanning)await scanning;await scan();broadcast();}
+    return result;
+  });
   handle('launch', async (workspaceId, launcherId) => {
+    if (folderTrash.busy) throw new Error('正在删除文件夹，请稍后操作');
     if (quitDialog || quitting) throw new Error('正在退出，请先取消退出再操作');
     const launcher = (await commandView(workspaceId)).commands.find(l => l.id === launcherId);
+    if(folderTrash.busy)throw new Error('正在删除文件夹，请稍后操作');
     if (!launcher) throw new Error('启动项已变化，请重新选择');
     const config = store.configs.find(c => c.id === launcherId) || store.save(launcher);
     return manager.start(config);
@@ -87,6 +109,7 @@ async function bootstrap() {
   handle('remove', id => { configFor(id); if (manager.isActive(id)) throw new Error('请先停止此配置再删除'); store.delete(id); catalog.forget(id); broadcast(); });
   handle('action', async (id, action) => {
     const config = configFor(id);
+    if (folderTrash.busy) throw new Error('正在删除文件夹，请稍后操作');
     if (quitDialog || quitting) throw new Error('正在处理退出，请先取消退出再操作');
     if (action === 'start') return manager.start(config);
     if (action === 'stop') return manager.stop(id);
@@ -99,11 +122,11 @@ async function bootstrap() {
     if(target!==w.path&&!target.startsWith(w.path+path.sep))throw new Error('路径不在此工作区内');
     return {w,target};
   };
-  const canOpen=()=>{if(quitDialog||quitting)throw new Error('正在退出，请稍后操作');};
+  const canOpen=()=>{if(folderTrash.busy)throw new Error('正在删除文件夹，请稍后操作');if(quitDialog||quitting)throw new Error('正在退出，请稍后操作');};
   handle('session-ensure',id=>{canOpen();return sessions.ensure(discovery.get(id));});
   handle('session-create',(id,relative='')=>{canOpen();const {w,target}=sessionWorkspace(id,relative);if(!fs.statSync(target).isDirectory())throw new Error('请选择目录');return sessions.create(w,target);});
   handle('session-send',async(id,launcherId,sessionId,fillOnly=false)=>{
-    canOpen();const launcher=(await commandView(id)).commands.find(l=>l.id===launcherId);if(!launcher)throw new Error('命令已变化，请重新选择');
+    canOpen();const launcher=(await commandView(id)).commands.find(l=>l.id===launcherId);canOpen();if(!launcher)throw new Error('命令已变化，请重新选择');
     const config=store.configs.find(c=>c.id===launcherId)||store.save(launcher);
     return sessions.send(discovery.get(id),config,sessionId,!!fillOnly);
   });
@@ -165,7 +188,7 @@ async function bootstrap() {
   app.on('before-quit', event => {
     if (quitting) return;
     event.preventDefault();
-    if (quitDialog) return;
+    if (quitDialog||folderTrash.busy) return;
     if (manager.pending.size||sessions.initializing.size) { show(); dialog.showMessageBox(window, { message: '正在检查启动配置，请稍后退出。' }); return; }
     quitDialog = true;
     (async () => {

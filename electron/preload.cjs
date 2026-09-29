@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('branchdeck', {
   historyScan: () => invoke('history-scan'),
   historyFile: () => invoke('history-file'),
   historyImport: (scanId,selections) => invoke('history-import',scanId,selections),
+  folderTrash:(id,relative)=>invoke('folder-trash',id,relative),
   workspaceRemove:(id,scope)=>invoke('workspace-remove',id,scope),
   workspaceRestore:id=>invoke('workspace-restore',id),
   commandMove: (id,commandId,targetId,after)=>invoke('command-move',id,commandId,targetId,after),
