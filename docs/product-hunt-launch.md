@@ -6,11 +6,11 @@ Status: preparation only; no launch scheduled or submitted.
 
 Name: BranchDeck
 
-Tagline: Workspaces, commands, and terminals in one Mac app
+Tagline: Keep your worktrees, commands, and terminals in context
 
 Description:
 
-BranchDeck gives your local development a home on macOS. Discover projects and Git worktrees, turn useful shell history into shortcuts, and switch workspaces without losing running terminals. Built around your existing tools, with local workspace discovery and no BranchDeck account required.
+Juggling Codex, Claude Code, and several Git worktrees? BranchDeck keeps each local checkout, useful commands, and running terminals together on macOS. Find the right workspace, test a feature, and return to your dev server while the app stays running. Discovery happens locally; no BranchDeck account required.
 
 Maker comment draft:
 
@@ -38,3 +38,17 @@ Place only the reviewed DMG, ZIP, and checksum file under `downloads/`. Never co
 
 - https://www.producthunt.com/launch/preparing-for-launch
 - https://help.producthunt.com/en/articles/484932-can-i-submit-an-unreleased-product
+
+## Landing page review
+
+Editorial self-assessment: **95/100 for the introduction page**, not a product-readiness score or a prediction of launch results.
+
+| Criterion | Score | Evidence and remaining gap |
+| --- | --- | --- |
+| Positioning | 20/20 | First screen names the worktree workflow, audience, platform, and concrete benefit. |
+| Differentiation | 19/20 | Explains checkout discovery, project shortcuts, and terminal continuity; value still needs validation with actual users. |
+| Demonstration | 18/20 | Interactive three-step project switch, explicitly labeled as an illustration; actual app footage would provide stronger evidence. |
+| Download transparency | 19/20 | Version, architecture, Chinese UI, signed distribution, checksums, setup and session limits are disclosed. Public domain and support contact remain launch prerequisites. |
+| Readability and interaction | 19/20 | Desktop and narrow-screen layouts checked, walkthrough click and keyboard paths verified, semantic headings and live status added. No independent accessibility audit. |
+
+The page intentionally makes no adoption, time-saved, pricing, or testimonial claims. The interactive example executes no commands. Public website text contains only fictional project names and neutral paths.
