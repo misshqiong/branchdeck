@@ -56,3 +56,6 @@ logs/
 *.p8
 *.provisionprofile
 *.mobileprovision
+
+# Public download artifacts are deployed separately.
+/website/downloads/
