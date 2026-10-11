@@ -1,6 +1,8 @@
 # Product Hunt launch preparation
 
-Status: preparation only; no launch scheduled or submitted.
+Status (2026-10-11): website deployed and verified on a server-local preview listener; public domain pending. No Product Hunt launch scheduled or submitted. Login is blocked by the browser security verification page.
+
+Upload bundle: `launch/product-hunt/` contains the existing product icon, three labeled concept illustrations, and listing fields. The gallery illustrations are not app screenshots. Domain, public support contact, and pricing remain unset until supplied by the owner. The deployed download remains the reviewed Chinese-interface 0.10.1 build; unverified local English UI changes are not included.
 
 ## Listing copy
 

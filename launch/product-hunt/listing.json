@@ -1,0 +1,19 @@
+{
+  "name": "BranchDeck",
+  "tagline": "Keep your worktrees, commands, and terminals in context",
+  "description": "Juggling Codex, Claude Code, and several Git worktrees? BranchDeck keeps each local checkout, useful commands, and running terminals together on macOS. Find the right workspace, test a feature, and return to your dev server while the app stays running. Discovery happens locally; no BranchDeck account required. Current preview: Apple Silicon, Chinese interface.",
+  "website": null,
+  "pricing": null,
+  "support": null,
+  "suggestedTopics": [
+    "Developer Tools",
+    "Productivity"
+  ],
+  "thumbnail": "thumbnail.png",
+  "gallery": [
+    "01-workspaces.png",
+    "02-commands.png",
+    "03-terminals.png"
+  ],
+  "status": "Not submitted. Public URL, pricing, support contact and Product Hunt sign-in pending."
+}
