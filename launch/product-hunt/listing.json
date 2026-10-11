@@ -1,10 +1,10 @@
 {
   "name": "BranchDeck",
   "tagline": "Keep your worktrees, commands, and terminals in context",
-  "description": "Juggling Codex, Claude Code, and several Git worktrees? BranchDeck keeps each local checkout, useful commands, and running terminals together on macOS. Find the right workspace, test a feature, and return to your dev server while the app stays running. Discovery happens locally; no BranchDeck account required. Current preview: Apple Silicon, Chinese interface.",
-  "website": null,
-  "pricing": null,
-  "support": null,
+  "description": "Juggling Codex, Claude Code, and several Git worktrees? BranchDeck keeps each local checkout, useful commands, and running terminals together on macOS. Find the right workspace, test a feature, and return to your dev server while the app stays running. Discovery happens locally; no BranchDeck account required. Free preview for Apple Silicon Macs. Current interface: Chinese.",
+  "website": "https://branchdeck.rabbitmoon.app",
+  "pricing": "Free",
+  "support": "https://github.com/misshqiong/branchdeck/issues",
   "suggestedTopics": [
     "Developer Tools",
     "Productivity"
@@ -15,5 +15,7 @@
     "02-commands.png",
     "03-terminals.png"
   ],
-  "status": "Not submitted. Public URL, pricing, support contact and Product Hunt sign-in pending."
+  "status": "Successfully scheduled on Product Hunt for 2026-10-11 at 00:01 America/Los_Angeles (15:01 Asia/Shanghai).",
+  "productHuntUrl": "https://www.producthunt.com/products/branchdeck?launch=branchdeck",
+  "scheduledAt": "2026-10-11T07:01:00Z"
 }
