@@ -3,6 +3,8 @@ import path from 'node:path';
 import os from 'node:os';
 import { createHash } from 'node:crypto';
 import { run, branchInfo } from './system.mjs';
+import { ClaudeCache } from './claude-cache.mjs';
+import { desktopOutputs } from './claude-desktop.mjs';
 const ignored = new Set(['node_modules', '.git', '.claude', '.codex', 'dist', 'build', 'target', 'coverage', 'release', '.next', '.venv', 'venv', 'vendor', 'Pods', '.gradle', '.cache']);
 const idFor = value => createHash('sha256').update(value).digest('hex').slice(0, 20);
 const globalEntries = directory => { try { return fs.readdirSync(directory, { withFileTypes: true }); } catch { return []; } };
@@ -24,6 +26,7 @@ export function parseWorktrees(output) {
 export class Discovery {
   constructor({ home = os.homedir(), codexHome = process.env.CODEX_HOME || path.join(home, '.codex'), claudeHome = process.env.CLAUDE_CONFIG_DIR || path.join(home, '.claude'), roots = [], metadata = true, canAccess = () => true } = {}) {
     this.canAccess = canAccess; this.home = home; this.codexHome = codexHome; this.claudeHome = claudeHome; this.roots = roots; this.metadata = metadata; this.historyRoots=[];
+    this.claudeCache = new ClaudeCache({home:claudeHome, canAccess});
     this.result = { workspaces: [], scannedAt: null, warnings: [], scanning: false }; this.pending = null;
   }
   async scan(configs = []) {
@@ -58,14 +61,14 @@ export class Discovery {
           catch { warnings.push('Codex 数据库部分索引不可读，已使用项目目录和 worktree 补充发现。'); }
         }
       }
+      for (const output of desktopOutputs(this.home, allowed)) {
+        add(output.path, 'Claude 生成文件', output.updatedAt, true);
+        rootLabels[output.path] ||= `Claude outputs · ${idFor(output.path).slice(0, 6)}`;
+      }
       const claudeFiles = [path.join(this.home, '.claude.json'), path.join(this.claudeHome, '.claude.json')];
       for (const file of claudeFiles) for (const [p, project] of Object.entries(json(file).projects || {})) add(p, 'Claude Code', Number(project?.lastSessionDate) || 0, true);
-      for (const project of entries(path.join(this.claudeHome, 'projects'))) {
-        if (!project.isDirectory()) continue;
-        const index = json(path.join(this.claudeHome, 'projects', project.name, 'sessions-index.json'));
-        if (index.originalPath) add(index.originalPath, 'Claude Code');
-        for (const entry of index.entries || []) if (entry.projectPath) add(entry.projectPath, 'Claude Code', Date.parse(entry.modified) || 0);
-      }
+      for (const project of await this.claudeCache.scan()) add(project.path, project.temporary ? 'Claude 临时目录' : 'Claude Code', project.updatedAt, true);
+      warnings.push(...this.claudeCache.warnings);
       for (const outer of entries(path.join(this.codexHome, 'worktrees'))) if (outer.isDirectory()) {
         const directory = path.join(this.codexHome, 'worktrees', outer.name); add(directory, 'Codex');
         for (const inner of entries(directory)) if (inner.isDirectory()) add(path.join(directory, inner.name), 'Codex');

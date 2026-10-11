@@ -1,26 +1,64 @@
-import {useEffect,useState} from 'react';
-import {Check,FolderOpen,History,Import,Loader2,RefreshCw,Search} from 'lucide-react';
-import type {Config,HistoryCandidate,HistoryResult,Workspace} from './types';
-const api=window.branchdeck;
-const short=(s:string)=>s.replace(/^\/Users\/[^/]+/,'~');
-export function HistoryPanel({workspace,configs,onImported}:{workspace:Workspace;configs:Config[];onImported:()=>Promise<void>}){
- const [result,setResult]=useState<HistoryResult|null>(null),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('');
- const [query,setQuery]=useState(''),[scope,setScope]=useState('workspace'),[selected,setSelected]=useState<Set<string>>(new Set()),[importedIds,setImportedIds]=useState<Set<string>>(new Set()),[target,setTarget]=useState(workspace.path);
- const accept=(next:HistoryResult)=>{setResult(next);setSelected(new Set());setImportedIds(new Set());setMessage('');};
- useEffect(()=>{let alive=true;api.historyScan().then(next=>alive&&accept(next)).catch(e=>alive&&setError(e.message)).finally(()=>alive&&setLoading(false));return()=>{alive=false;};},[]);
- const scan=async(file=false)=>{setLoading(true);setError('');try{const next=await(file?api.historyFile():api.historyScan());if(next)accept(next);}catch(e){setError((e as Error).message);}finally{setLoading(false);}};
- const exists=(item:HistoryCandidate)=>importedIds.has(item.id)||configs.some(c=>c.cwd===(item.cwd||target)&&c.command===item.command);
- const candidates=(result?.candidates||[]).filter(c=>(scope==='all'||!c.cwd||c.cwd===workspace.path||c.cwd.startsWith(workspace.path+'/'))&&`${c.command} ${c.cwd||''}`.toLowerCase().includes(query.toLowerCase()));
- const picks=(result?.candidates||[]).filter(c=>selected.has(c.id)&&!exists(c));
- const toggle=(id:string)=>setSelected(old=>{const next=new Set(old);next.has(id)?next.delete(id):next.add(id);return next;});
- const importSelected=async()=>{if(!result||!picks.length)return;setBusy(true);setError('');try{const response=await api.historyImport(result.scanId,picks.map(c=>({id:c.id,cwd:c.cwd||target})));setImportedIds(old=>new Set([...old,...picks.map(c=>c.id)]));setSelected(new Set());setMessage(`已导入 ${response.imported} 条${response.skipped?`，跳过 ${response.skipped} 条重复命令`:''}，可在中间列找到。`);await onImported();}catch(e){setError((e as Error).message);}finally{setBusy(false);}};
- return <section className="history-panel" aria-label="终端历史导入"><div className="history-heading"><div><span className="overline">FROM YOUR TERMINAL</span><h2><History size={21}/>发现常用命令</h2><p>匹配成功的命令已显示在操作列；这里可补充关联其余命令。</p></div><button className="icon" title="重新扫描历史" disabled={loading||busy} onClick={()=>scan()}><RefreshCw size={16} className={loading?'spin':''}/></button></div>
- <div className="history-sources"><span>{result?`已读取 ${result.sources.length} 个历史文件 · ${result.candidates.length} 条候选`:'正在查找 zsh / bash 历史…'}</span><button disabled={loading||busy} onClick={()=>scan(true)}>选择历史文件</button></div>
- <div className="history-target"><div><strong>未记录目录的命令，导入到</strong><code title={target}>{short(target)}</code></div><button className="secondary" disabled={busy||loading} onClick={async()=>{try{const folder=await api.pickDirectory();if(folder){setTarget(folder);setImportedIds(new Set());setSelected(new Set());}}catch(e){setError((e as Error).message);}}}><FolderOpen size={14}/>更改</button></div>
- <div className="history-filters"><label><Search size={14}/><input aria-label="搜索历史命令" placeholder="搜索命令或目录…" value={query} onChange={e=>setQuery(e.target.value)}/></label><select aria-label="历史范围" value={scope} onChange={e=>setScope(e.target.value)}><option value="workspace">当前工作区 / 待关联</option><option value="all">全部目录</option></select></div>
- <div className="history-select"><button disabled={loading||busy||!candidates.some(c=>!exists(c))} onClick={()=>setSelected(new Set(candidates.filter(c=>!exists(c)).slice(0,100).map(c=>c.id)))}>选择当前列表{candidates.length>100?'前 100 条':''}</button><button disabled={busy||!selected.size} onClick={()=>setSelected(new Set())}>清除选择</button><span>{candidates.length} 条</span></div>
- <div className="history-list">{loading?<div className="loading"><Loader2 size={18} className="spin"/>正在整理历史…</div>:candidates.map(c=><label className={`history-item ${selected.has(c.id)?'selected':''} ${exists(c)?'imported':''}`} key={c.id}><input aria-label={`导入 ${c.command}`} type="checkbox" checked={selected.has(c.id)&&!exists(c)} disabled={busy||exists(c)||selected.size>=100&&!selected.has(c.id)} onChange={()=>toggle(c.id)}/><div className="history-item-content"><div className="history-item-top"><span className={`history-kind ${c.kind}`}>{c.kind==='service'?'服务':'命令'}</span><span>历史记录 {c.count} 次</span>{exists(c)&&<b><Check size={11}/>已添加</b>}</div><code>{c.command}</code><div className="history-directory"><FolderOpen size={11}/><span title={c.cwd||target}>{c.cwd?short(c.cwd):`待关联 → ${short(target)}`}</span></div>{c.requiresConfirm&&<small className="history-confirm">执行时会再次确认</small>}</div></label>)}{!loading&&!candidates.length&&<div className="history-empty"><History size={29}/><h3>{result?.sources.length?'没有匹配的候选命令':'还没有找到历史文件'}</h3><p>{result?.sources.length?'可切换到全部目录，或选择其他历史文件。':'支持 zsh 和 bash，可手动选择自定义 HISTFILE。'}</p></div>}</div>
- {error&&<p className="form-error" role="alert">{error}</p>}{message&&<p className="history-success" role="status"><Check size={14}/>{message}</p>}
- <details className="history-notes"><summary>扫描来源与说明</summary><p>历史通常不记录执行目录，仅命令内明确写出的绝对目录会自动关联。不会根据相邻的 cd 命令猜测目录。导入只保存配置，不执行命令。</p><p>筛选常见开发命令；疑似含凭据、删除或强制操作、复杂 Shell 表达式会跳过。仅扫描已写入文件的记录；当前终端尚未保存的历史可能不会出现。</p>{result?.sources.map(s=><div key={s.path}><code>{short(s.path)}</code><span>{s.records} 条记录</span></div>)}{result?.warnings.map(w=><p key={w}>{w}</p>)}</details>
- <div className="history-footer"><span>已选择 {picks.length} 条</span><button className="primary" disabled={loading||busy||!picks.length} onClick={importSelected}>{busy?<Loader2 size={14} className="spin"/>:<Import size={14}/>}导入所选{picks.length?`（${picks.length}）`:''}</button></div></section>;
+import {t} from './i18n';
+import { useEffect, useState } from 'react';
+import { Check, FolderOpen, History, Import, Loader2, RefreshCw, Search } from 'lucide-react';
+import type { Config, HistoryCandidate, HistoryResult, Workspace } from './types';
+const api = window.branchdeck;
+const short = (s: string) => s.replace(/^\/Users\/[^/]+/, '~');
+export function HistoryPanel({ workspace, configs, onImported }: {
+    workspace: Workspace;
+    configs: Config[];
+    onImported: () => Promise<void>;
+}) {
+    const [result, setResult] = useState<HistoryResult | null>(null), [loading, setLoading] = useState(true), [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('');
+    const [query, setQuery] = useState(''), [scope, setScope] = useState('workspace'), [selected, setSelected] = useState<Set<string>>(new Set()), [importedIds, setImportedIds] = useState<Set<string>>(new Set()), [target, setTarget] = useState(workspace.path);
+    const accept = (next: HistoryResult) => { setResult(next); setSelected(new Set()); setImportedIds(new Set()); setMessage(''); };
+    useEffect(() => { let alive = true; api.historyScan().then(next => alive && accept(next)).catch(e => alive && setError(e.message)).finally(() => alive && setLoading(false)); return () => { alive = false; }; }, []);
+    const scan = async (file = false) => { setLoading(true); setError(''); try {
+        const next = await (file ? api.historyFile() : api.historyScan());
+        if (next)
+            accept(next);
+    }
+    catch (e) {
+        setError((e as Error).message);
+    }
+    finally {
+        setLoading(false);
+    } };
+    const exists = (item: HistoryCandidate) => importedIds.has(item.id) || configs.some(c => c.cwd === (item.cwd || target) && c.command === item.command);
+    const candidates = (result?.candidates || []).filter(c => (scope === 'all' || !c.cwd || c.cwd === workspace.path || c.cwd.startsWith(workspace.path + '/')) && `${c.command} ${c.cwd || ''}`.toLowerCase().includes(query.toLowerCase()));
+    const picks = (result?.candidates || []).filter(c => selected.has(c.id) && !exists(c));
+    const toggle = (id: string) => setSelected(old => { const next = new Set(old); next.has(id) ? next.delete(id) : next.add(id); return next; });
+    const importSelected = async () => { if (!result || !picks.length)
+        return; setBusy(true); setError(''); try {
+        const response = await api.historyImport(result.scanId, picks.map(c => ({ id: c.id, cwd: c.cwd || target })));
+        setImportedIds(old => new Set([...old, ...picks.map(c => c.id)]));
+        setSelected(new Set());
+        setMessage(t("已导入 {0} 条{1}，可在中间列找到。", [response.imported, response.skipped ? t("，跳过 {0} 条重复命令", [response.skipped]) : '']));
+        await onImported();
+    }
+    catch (e) {
+        setError((e as Error).message);
+    }
+    finally {
+        setBusy(false);
+    } };
+    return <section className="history-panel" aria-label={t("终端历史导入")}><div className="history-heading"><div><span className="overline">FROM YOUR TERMINAL</span><h2><History size={21}/>{t("发现常用命令")}</h2><p>{t("匹配成功的命令已显示在操作列；这里可补充关联其余命令。")}</p></div><button className="icon" title={t("重新扫描历史")} disabled={loading || busy} onClick={() => scan()}><RefreshCw size={16} className={loading ? 'spin' : ''}/></button></div>
+ <div className="history-sources"><span>{result ? t("已读取 {0} 个历史文件 · {1} 条候选", [result.sources.length, result.candidates.length]) : t("正在查找 zsh / bash 历史…")}</span><button disabled={loading || busy} onClick={() => scan(true)}>{t("选择历史文件")}</button></div>
+ <div className="history-target"><div><strong>{t("未记录目录的命令，导入到")}</strong><code title={target}>{short(target)}</code></div><button className="secondary" disabled={busy || loading} onClick={async () => { try {
+        const folder = await api.pickDirectory();
+        if (folder) {
+            setTarget(folder);
+            setImportedIds(new Set());
+            setSelected(new Set());
+        }
+    }
+    catch (e) {
+        setError((e as Error).message);
+    } }}><FolderOpen size={14}/>{t("更改")}</button></div>
+ <div className="history-filters"><label><Search size={14}/><input aria-label={t("搜索历史命令")} placeholder={t("搜索命令或目录…")} value={query} onChange={e => setQuery(e.target.value)}/></label><select aria-label={t("历史范围")} value={scope} onChange={e => setScope(e.target.value)}><option value="workspace">{t("当前工作区 / 待关联")}</option><option value="all">{t("全部目录")}</option></select></div>
+ <div className="history-select"><button disabled={loading || busy || !candidates.some(c => !exists(c))} onClick={() => setSelected(new Set(candidates.filter(c => !exists(c)).slice(0, 100).map(c => c.id)))}>{t("选择当前列表")}{candidates.length > 100 ? t("前 100 条") : ''}</button><button disabled={busy || !selected.size} onClick={() => setSelected(new Set())}>{t("清除选择")}</button><span>{candidates.length}{t("条")}</span></div>
+ <div className="history-list">{loading ? <div className="loading"><Loader2 size={18} className="spin"/>{t("正在整理历史…")}</div> : candidates.map(c => <label className={`history-item ${selected.has(c.id) ? 'selected' : ''} ${exists(c) ? 'imported' : ''}`} key={c.id}><input aria-label={t("导入 {0}", [c.command])} type="checkbox" checked={selected.has(c.id) && !exists(c)} disabled={busy || exists(c) || selected.size >= 100 && !selected.has(c.id)} onChange={() => toggle(c.id)}/><div className="history-item-content"><div className="history-item-top"><span className={`history-kind ${c.kind}`}>{c.kind === 'service' ? t("服务") : t("命令")}</span><span>{t("历史记录")}{c.count}{t("次")}</span>{exists(c) && <b><Check size={11}/>{t("已添加")}</b>}</div><code>{c.command}</code><div className="history-directory"><FolderOpen size={11}/><span title={c.cwd || target}>{c.cwd ? short(c.cwd) : t("待关联 → {0}", [short(target)])}</span></div>{c.requiresConfirm && <small className="history-confirm">{t("执行时会再次确认")}</small>}</div></label>)}{!loading && !candidates.length && <div className="history-empty"><History size={29}/><h3>{result?.sources.length ? t("没有匹配的候选命令") : t("还没有找到历史文件")}</h3><p>{result?.sources.length ? t("可切换到全部目录，或选择其他历史文件。") : t("支持 zsh 和 bash，可手动选择自定义 HISTFILE。")}</p></div>}</div>
+ {error && <p className="form-error" role="alert">{error}</p>}{message && <p className="history-success" role="status"><Check size={14}/>{message}</p>}
+ <details className="history-notes"><summary>{t("扫描来源与说明")}</summary><p>{t("历史通常不记录执行目录，仅命令内明确写出的绝对目录会自动关联。不会根据相邻的 cd 命令猜测目录。导入只保存配置，不执行命令。")}</p><p>{t("筛选常见开发命令；疑似含凭据、删除或强制操作、复杂 Shell 表达式会跳过。仅扫描已写入文件的记录；当前终端尚未保存的历史可能不会出现。")}</p>{result?.sources.map(s => <div key={s.path}><code>{short(s.path)}</code><span>{s.records}{t("条记录")}</span></div>)}{result?.warnings.map(w => <p key={w}>{w}</p>)}</details>
+ <div className="history-footer"><span>{t("已选择")}{picks.length}{t("条")}</span><button className="primary" disabled={loading || busy || !picks.length} onClick={importSelected}>{busy ? <Loader2 size={14} className="spin"/> : <Import size={14}/>}{t("导入所选")}{picks.length ? `（${picks.length}）` : ''}</button></div></section>;
 }

@@ -1,7 +1,7 @@
 {
   "name": "BranchDeck",
   "tagline": "Your local AI projects, branches, and shortcut commands",
-  "description": "Bring local Codex and Claude Code projects into one macOS workspace. Group related Git worktrees, find each branch checkout, and keep test, build, and dev shortcuts with its directory. See commands and terminal output for the selected workspace. Local discovery; no BranchDeck account. Free and MIT open source: fork it, adapt it, or contribute on GitHub. Apple Silicon preview with a Chinese interface. Gallery: real app screenshots using fictional projects.",
+  "description": "Bring local Codex and Claude Code projects into one macOS workspace. Group Git worktrees, find each branch checkout, and keep test, build, and dev shortcuts with its directory. New: one-click Claude local cache recovery with categorized files and document previews. Free, MIT open source. Apple Silicon; English and Simplified Chinese. Local recovery only—not a complete cloud chat backup.",
   "website": "https://branchdeck.rabbitmoon.app",
   "pricing": "Free",
   "support": "https://github.com/misshqiong/branchdeck/issues",
@@ -13,12 +13,13 @@
   "gallery": [
     "01-project-branches.jpg",
     "02-workspace-shortcuts.jpg",
-    "03-branch-test-output.jpg"
+    "03-branch-test-output.jpg",
+    "04-claude-cache.jpg"
   ],
   "status": "Successfully scheduled on Product Hunt for 2026-10-11 at 00:01 America/Los_Angeles (15:01 Asia/Shanghai).",
   "productHuntUrl": "https://www.producthunt.com/products/branchdeck?launch=branchdeck",
   "scheduledAt": "2026-10-11T07:01:00Z",
-  "makerComment": "I built BranchDeck to organize the local project directories left across Codex, Claude Code, and parallel Git worktrees. The core is simple: project → branch checkout → useful commands. Find a repository, select its local branch workspace, and keep test, build, or dev shortcuts beside that directory. Commands belong to workspace directories; they do not automatically follow a branch name when you check out something else. The gallery shows the real app with fictional projects. This free preview is for Apple Silicon Macs and currently has a Chinese interface. Which part of managing your local AI projects and branch commands would you improve first?",
+  "makerComment": "I built BranchDeck to organize the local project directories left across Codex, Claude Code, and parallel Git worktrees. The core is simple: project → branch checkout → useful commands. Find a repository, select its local branch workspace, and keep test, build, or dev shortcuts beside that directory. Commands belong to workspace directories; they do not automatically follow a branch name when you check out something else. The gallery shows the real app with fictional projects. This free preview is for Apple Silicon Macs and supports English and Simplified Chinese. Version 0.11 adds one-click recovery of locally cached Claude chat files and previews. It only recovers what remains on this Mac, without fetching cloud history. Which part of managing your local AI projects and branch commands would you improve first?",
   "repository": "https://github.com/misshqiong/branchdeck",
   "openSource": true,
   "license": "MIT"

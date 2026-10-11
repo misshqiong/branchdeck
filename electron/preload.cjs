@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 const invoke = (channel, ...args) => ipcRenderer.invoke(channel, ...args).then(result => { if (!result.ok) throw new Error(result.error); return result.value; });
 contextBridge.exposeInMainWorld('branchdeck', {
+  setLanguage: value => invoke('language', value),
   accessStatus: () => invoke('access-status'),
   accessGrant: (kind,id) => invoke('access-grant',kind,id),
   accessForget: id => invoke('access-forget',id),
@@ -12,7 +13,10 @@ contextBridge.exposeInMainWorld('branchdeck', {
   sessionResize: (id,cols,rows)=>invoke('session-resize',id,cols,rows),
   sessionInterrupt: id=>invoke('session-interrupt',id),
   sessionClose: (id,confirmed)=>invoke('session-close',id,confirmed),
-  filePreview: (id,relative)=>invoke('file-preview',id,relative),
+  claudeCacheList: id => invoke('claude-cache-list', id),
+  claudeCachePreview: (id, fileId, offset) => invoke('claude-cache-preview', id, fileId, offset),
+  filePreview: (id,relative,offset)=>invoke('file-preview',id,relative,offset),
+  fileReveal: (id,relative)=>invoke('file-reveal',id,relative),
   onSessionData: callback=>{const fn=(_,value)=>callback(value);ipcRenderer.on('session-data',fn);return ()=>ipcRenderer.removeListener('session-data',fn);},
   historyScan: () => invoke('history-scan'),
   historyFile: () => invoke('history-file'),
@@ -28,8 +32,10 @@ contextBridge.exposeInMainWorld('branchdeck', {
   discover: () => invoke('discover'),
   launchers: id => invoke('launchers', id),
   folders: (id, relative) => invoke('folders', id, relative),
+  recoverClaudeChats: () => invoke('claude-chat-recover'),
   addRoot: () => invoke('add-root'),
   openWorkspace: id => invoke('workspace-open', id),
+  copyWorkspacePath: id => invoke('workspace-copy-path', id),
   launch: (workspaceId, launcherId) => invoke('launch', workspaceId, launcherId),
   snapshot: () => invoke('snapshot'),
   save: config => invoke('save', config),

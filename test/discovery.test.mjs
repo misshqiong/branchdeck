@@ -14,3 +14,17 @@ test('manual container roots discover immediate projects and Git commands carry 
 test('parses null-delimited worktree paths without splitting spaces or newlines',()=>{assert.deepEqual(parseWorktrees('worktree /tmp/a b\nname\0HEAD abc\0branch refs/heads/feature\0\0'),[{path:'/tmp/a b\nname',branch:'feature'}]);});
 
 test('generic discovery finds other tool projects and explicit history directories, but ignores dependencies and symlinks',async t=>{const {home,write,d}=fixture(t);write('Projects/other-tool/pom.xml','<project/>');const p=write('elsewhere/history-app/package.json',{});write('Projects/node_modules/nope/package.json',{});write('Projects/.hidden/nope/package.json',{});fs.symlinkSync(path.dirname(p),path.join(home,'Projects/alias'));d.historyRoots=[path.dirname(p)];const result=await d.scan();assert.ok(result.workspaces.some(w=>w.path===path.join(home,'Projects/other-tool')&&w.sources.includes('本地目录')));assert.ok(result.workspaces.some(w=>w.path===path.dirname(p)&&w.sources.includes('终端历史')));assert.ok(!result.workspaces.some(w=>/node_modules|hidden|alias/.test(w.path)));});
+
+test('Claude Desktop discovers only populated output folders, respecting access, symlinks and settings',async t=>{
+ const {home,write}=fixture(t);const base='Library/Application Support/Claude';
+ const directory=path.dirname(write(base+'/local-agent-mode-sessions/account/scope/local_one/outputs/result.pdf','fixture'));
+ write(base+'/Cache/cache.txt','noise');write(base+'/local-agent-mode-sessions/account/scope/local_one/uploads/input.png','input');
+ fs.mkdirSync(path.join(home,base,'local-agent-mode-sessions/account/scope/local_empty/outputs'),{recursive:true});
+ fs.mkdirSync(path.join(home,base,'local-agent-mode-sessions/account/scope/local_link'),{recursive:true});
+ fs.symlinkSync(directory,path.join(home,base,'local-agent-mode-sessions/account/scope/local_link/outputs'));
+ const d=new Discovery({home});const result=await d.scan();const outputs=result.workspaces.filter(w=>w.sources.includes('Claude 生成文件'));
+ assert.equal(outputs.length,1);assert.equal(outputs[0].path,directory);assert.ok(d.folders(outputs[0].id).some(f=>f.name==='result.pdf'));
+ assert.ok(!result.workspaces.some(w=>w.path===path.join(home,base)));
+ const denied=new Discovery({home,canAccess:p=>typeof p==='string'&&!p.startsWith(directory)});assert.ok(!(await denied.scan()).workspaces.some(w=>w.path===directory));
+ const disabled=new Discovery({home,metadata:false});assert.ok(!(await disabled.scan()).workspaces.some(w=>w.path===directory));
+});

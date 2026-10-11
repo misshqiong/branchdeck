@@ -30,7 +30,7 @@ BranchDeck 把这些信息按工作区放在一起。打开一个 worktree，启
 
 BranchDeck 从 **Codex** 和 **Claude Code** 的本地项目元数据中发现工作区，通过 **Git worktree** 信息归集相关检出目录；普通项目也可通过常见开发目录自动发现，或手动添加。
 
-发现过程只读取项目元数据，不读取对话正文，也不修改编程工具的配置或数据库。它负责这些工具周围的工作区和终端管理，不负责启动或编排 AI 对话。
+发现过程从项目索引及有限长度的 Claude 会话文件中提取目录字段，不从对话正文推测目录，也不修改编程工具的配置或数据库。「Claude 会话」标签可只读浏览关联的会话记录、记忆文档及缓存文本文件；点击文件后按页读取正文。会话 scratchpad 与工具记录引用的现存临时输出目录会显示为「Claude 临时目录」，可直接浏览其中产物。它负责这些工具周围的工作区和终端管理，不负责启动或编排 AI 对话。
 
 ### 常用命令回到对应项目
 
@@ -81,7 +81,7 @@ open release/mac-arm64/BranchDeck.app
 
 ## 本地数据与隐私
 
-工作区发现和终端历史处理均在本机完成。BranchDeck 不上传终端历史，不读取编程对话正文。保存的命令、偏好和服务日志存放在 `~/Library/Application Support/BranchDeck/`。
+工作区发现和终端历史处理均在本机完成。BranchDeck 不上传终端历史或会话内容。Claude 会话正文仅在用户打开文件时展示，不执行其中的命令。保存的命令、偏好和服务日志存放在 `~/Library/Application Support/BranchDeck/`。
 
 仓库只包含源码、图标、文档与使用临时数据的测试。个人工作区列表、Shell 历史、日志、截图、环境文件及安装包不纳入版本控制。
 
@@ -103,3 +103,10 @@ npm run build
 ## 许可证与贡献
 
 本项目使用 [MIT 许可证](LICENSE)。你可以 Fork 后自行修改和运行，也可以通过 Pull Request 提交改进。开发环境与贡献步骤见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+## 0.11 更新
+
+- 一键扫描 Claude 本地聊天缓存，按下载、附件、正文、图片与 Cowork 文件分类；每次生成独立本地快照，不拉取云端历史。
+- 点击结果分类直接浏览，支持复制保存位置及 Finder 打开。
+- 支持 PDF、XLSX、CSV、图片、Markdown、HTML、JSON 和文本预览；HTML 活动内容禁用。
+- 设置中可切换 English / 简体中文。

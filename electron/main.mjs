@@ -1,4 +1,6 @@
-import { app, BrowserWindow, ipcMain, dialog, shell, Menu, Tray, nativeImage } from 'electron';
+import {runChatRecovery} from './claude-chat-job.mjs';
+import {filePreview} from './file-preview.mjs';
+import { app, BrowserWindow, ipcMain, dialog, shell, Menu, Tray, nativeImage, clipboard } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -24,6 +26,8 @@ else bootstrap().catch(error => { dialog.showErrorBox('BranchDeck 启动失败',
 async function bootstrap() {
   await app.whenReady();
   const dataDirectory = app.getPath('userData');
+  let language = app.getLocale().startsWith('zh') ? 'zh-CN' : 'en';
+  const text = (zh, en) => language === 'zh-CN' ? zh : en;
   const realHome = process.env.BRANCHDECK_DISCOVERY_HOME || os.userInfo().homedir;
   const access = new AccessStore({directory: dataDirectory, enabled: isStore, home: realHome, startAccessing: bookmark => app.startAccessingSecurityScopedResource(bookmark)});
   access.restore();
@@ -59,9 +63,28 @@ async function bootstrap() {
     try { return { ok: true, value: await fn(...args) }; } catch (e) { return { ok: false, error: e.message }; }
   });
   function awaitScan() { scan().catch(error => { discovery.result.warnings = [error.message]; broadcast(); }); }
+  handle('language', value => { if (!['en', 'zh-CN'].includes(value)) throw new Error('Invalid language'); language = value; updateMenus(); updateTray(); });
   const configFor = id => { const config = store.configs.find(c => c.id === id); if (!config) throw new Error('配置不存在'); return config; };
   handle('snapshot', async () => ({ access: access.snapshot(), configs: await Promise.all(store.configs.map(async c => ({ ...c, git: await branchInfo(c.cwd), exists: fs.existsSync(c.cwd) }))), runs: manager.list(), sessions:sessions.list(), commandRevision:catalog.revision, dataDirectory, historyScannedAt, historyWarnings, scanIntervalMinutes:5, discovery: workspaceCatalog.view(discovery.result) }));
   handle('discover', async () => {await scan();return workspaceCatalog.view(discovery.result);});
+  let chatRecovery=null;
+  handle('claude-chat-recover',()=>{
+    if(chatRecovery)return chatRecovery;
+    if(isStore)throw Error('聊天缓存提取需要非沙盒版本');
+    if(process.platform!=='darwin')throw Error('当前仅支持 macOS Claude Desktop 缓存');
+    const source=path.join(discoveryHome,'Library','Application Support','Claude');
+    if(!fs.existsSync(source))throw Error('未找到 Claude 本地缓存，请先安装并使用 Claude Desktop');
+    if(!canAccess(source))throw Error('没有读取 Claude 本地缓存的权限');
+    chatRecovery=(async()=>{
+      const result=await runChatRecovery({home:discoveryHome,destination:path.join(dataDirectory,'Claude Chat Archive')});
+      if(!discovery.roots.includes(result.output))discovery.roots.push(result.output);
+      atomicJson(rootsFile,discovery.roots);
+      if(scanning)await scanning;
+      await scan();workspaceCatalog.revive(result.output,discovery.result.workspaces);broadcast();
+      return {...result,workspaceId:discovery.result.workspaces.find(w=>w.path===result.output)?.id};
+    })().finally(()=>{chatRecovery=null;});
+    return chatRecovery;
+  });
   handle('workspace-remove',(id,scope)=>{const entry=workspaceCatalog.remove(discovery.result.workspaces,id,scope);broadcast();return entry;});
   handle('workspace-restore',id=>{workspaceCatalog.restore(id);broadcast();});
   handle('launchers', async id => {const view=await commandView(id);return [...view.commands,...view.suggestions];});
@@ -92,7 +115,7 @@ async function bootstrap() {
   });
   handle('access-forget',id=>{if(!isStore)throw new Error('当前版本不需要此授权');access.forget(id);broadcast();return access.snapshot();});
   handle('history-file', async () => {
-    const result=await chooseAccess('history',{properties:['openFile','showHiddenFiles'],title:'选择 Shell 历史文件'});
+    const result=await chooseAccess('history',{properties:['openFile','showHiddenFiles'],title:text('选择 Shell 历史文件', 'Choose a shell history file')});
     if(result.canceled)return null;
     if(isStore)syncHistoryGrants();else{history.extraFiles=[result.filePaths[0]];automaticHistory.extraFiles=[result.filePaths[0]];}refreshHistory();broadcast();return history.scan();
   });
@@ -103,9 +126,12 @@ async function bootstrap() {
     if(configs.some(c=>!discovery.result.workspaces.some(w=>c.cwd===w.path||c.cwd.startsWith(w.path+path.sep))))awaitScan();
     return {imported:configs.length,skipped};
   });
+  handle('claude-cache-list', id => discovery.claudeCache.list(discovery.get(id), discovery.result.workspaces));
+  handle('claude-cache-preview', (id, fileId, offset) => discovery.claudeCache.preview(discovery.get(id), discovery.result.workspaces, fileId, offset));
   handle('folders', (id, relative) => discovery.folders(id, relative));
-  handle('add-root', async () => { const result = await chooseAccess('workspace', { properties: ['openDirectory'], title: '添加工作区或包含多个项目的目录' }); if (result.canceled) return null; const root = fs.realpathSync(result.filePaths[0]); if (!discovery.roots.includes(root)) discovery.roots.push(root); atomicJson(rootsFile, discovery.roots); await scan(); workspaceCatalog.revive(root,discovery.result.workspaces); broadcast(); return root; });
+  handle('add-root', async () => { const result = await chooseAccess('workspace', { properties: ['openDirectory'], title: text('添加工作区或包含多个项目的目录', 'Add a workspace or a folder containing projects') }); if (result.canceled) return null; const root = fs.realpathSync(result.filePaths[0]); if (!discovery.roots.includes(root)) discovery.roots.push(root); atomicJson(rootsFile, discovery.roots); await scan(); workspaceCatalog.revive(root,discovery.result.workspaces); broadcast(); return root; });
   handle('workspace-open', id => openPath(discovery.get(id).path));
+  handle('workspace-copy-path', id => { clipboard.writeText(discovery.get(id).path); });
   const folderTrash=new FolderTrash({
     protectedPaths:[os.homedir(),discoveryHome,dataDirectory,app.getAppPath()],
     linked:async target=>{for(const directory of new Set([target,...discovery.result.workspaces.filter(w=>within(target,w.path)).map(w=>w.path)]))await checkLinkedWorktrees(directory);},
@@ -114,7 +140,7 @@ async function bootstrap() {
       for(const r of manager.list())if(manager.isActive(r.configId)&&within(target,r.cwd)&&!matches.some(s=>s.configId===r.configId))matches.push({id:r.configId,pid:r.pid,name:configFor(r.configId).name,type:'run'});
       return matches;
     },
-    confirm:async(target,related)=>{const answer=await dialog.showMessageBox(window,{type:'warning',buttons:['取消',related.length?'关闭相关终端并移到废纸篓':'移到废纸篓'],defaultId:0,cancelId:0,message:`删除文件夹「${path.basename(target)}」？`,detail:`将把下面的文件夹及其全部内容移到系统废纸篓：\n${target}\n\n${related.length?`将关闭 ${related.length} 个相关终端或服务：${related.map(s=>s.name).join('、')}。未保存的终端输入将丢失。\n`:''}需要恢复时，请在 Finder 的废纸篓中放回原位置。`});return answer.response===1;},
+    confirm:async(target,related)=>{const answer=await dialog.showMessageBox(window,{type:'warning',buttons:[text('取消', 'Cancel'),related.length?text('关闭相关终端并移到废纸篓', 'Close related terminals and move to Trash'):text('移到废纸篓', 'Move to Trash')],defaultId:0,cancelId:0,message:text(`删除文件夹「${path.basename(target)}」？`, `Move folder “${path.basename(target)}” to Trash?`),detail:text(`将把下面的文件夹及其全部内容移到系统废纸篓：\n${target}\n\n${related.length?`将关闭 ${related.length} 个相关终端或服务：${related.map(s=>s.name).join('、')}。未保存的终端输入将丢失。\n`:''}需要恢复时，请在 Finder 的废纸篓中放回原位置。`, `This folder and all its contents will be moved to the system Trash:\n${target}\n\n${related.length ? `${related.length} related terminals or services will be closed. Unfinished terminal input will be lost.\n` : ''}To restore it, use Put Back in Finder’s Trash.`)});return answer.response===1;},
     close:item=>item.type==='session'?sessions.close(item.id):manager.stop(item.id),
     trash:target=>shell.trashItem(target)
   });
@@ -164,17 +190,13 @@ async function bootstrap() {
   handle('session-resize',(id,cols,rows)=>sessions.resize(id,cols,rows));
   handle('session-interrupt',id=>sessions.interrupt(id));
   handle('session-close',async(id,confirmed=false)=>{const s=sessions.get(id);if((s.busy||s.draft)&&!confirmed)return {requiresConfirm:true};await sessions.close(id);return {requiresConfirm:false};});
-  handle('file-preview',(id,relative)=>{
-    const {target}=sessionWorkspace(id,relative),stat=fs.statSync(target);
-    if(!stat.isFile())throw new Error('请选择文件');if(stat.size>1024*1024)throw new Error('文件超过 1 MB，请在编辑器中打开');
-    const content=fs.readFileSync(target);if(content.includes(0))throw new Error('暂不支持二进制文件预览');
-    return {path:target,content:content.toString('utf8')};
-  });
+  handle('file-preview',(id,relative,offset=0)=>{const {target}=sessionWorkspace(id,relative);if(!canAccess(target))throw Error('文件未授权');return filePreview(target,offset);});
+  handle('file-reveal',(id,relative)=>shell.showItemInFolder(sessionWorkspace(id,relative).target));
   handle('terminal-snapshot', id => manager.terminalSnapshot(id));
   handle('terminal-input', (id, runId, data) => manager.input(id, runId, data));
   handle('terminal-resize', (id, runId, cols, rows) => manager.resize(id, runId, cols, rows));
   handle('logs', id => { configFor(id); return manager.tail(id); });
-  handle('pick-directory', async () => { const result = await chooseAccess('workspace', { properties: ['openDirectory', 'createDirectory'], title: '选择代码工作目录' }); return result.canceled ? null : result.filePaths[0]; });
+  handle('pick-directory', async () => { const result = await chooseAccess('workspace', { properties: ['openDirectory', 'createDirectory'], title: text('选择代码工作目录', 'Choose a project working directory') }); return result.canceled ? null : result.filePaths[0]; });
   const openPath = async target => { const error = await shell.openPath(target); if (error) throw new Error(error); };
   handle('open-directory', id => openPath(configFor(id).cwd));
   handle('open-log', id => { configFor(id); const current = manager.get(id); if (current && fs.existsSync(current.logPath)) shell.showItemInFolder(current.logPath); else throw new Error('尚无运行日志'); });
@@ -186,8 +208,8 @@ async function bootstrap() {
   function updateTray() {
     if (!tray) return;
     const count = sessions.list().filter(s=>s.busy).length;
-    tray.setToolTip(`BranchDeck · ${count} 个运行实例`);
-    tray.setContextMenu(Menu.buildFromTemplate([{ label: '打开 BranchDeck', click: show }, { label: `${count} 个实例运行中`, enabled: false }, { type: 'separator' }, ...store.configs.map(c => ({ label: `${manager.isActive(c.id) ? '●' : '○'} ${c.name}`, click: () => { show(); } })), { type: 'separator' }, { label: '退出 BranchDeck…', click: () => app.quit() }]));
+    tray.setToolTip(text(`BranchDeck · ${count} 个运行实例`, `BranchDeck · ${count} running`));
+    tray.setContextMenu(Menu.buildFromTemplate([{ label: text('打开 BranchDeck', 'Open BranchDeck'), click: show }, { label: text(`${count} 个实例运行中`, `${count} running sessions`), enabled: false }, { type: 'separator' }, ...store.configs.map(c => ({ label: `${manager.isActive(c.id) ? '●' : '○'} ${c.name}`, click: () => { show(); } })), { type: 'separator' }, { label: text('退出 BranchDeck…', 'Quit BranchDeck…'), click: () => app.quit() }]));
   }
   let changeTimer;
   function broadcast() { clearTimeout(changeTimer); changeTimer = setTimeout(() => { if (window && !window.isDestroyed()) window.webContents.send('change'); updateTray(); }, 60); }
@@ -208,24 +230,25 @@ async function bootstrap() {
   app.on('will-quit', () => clearInterval(discoveryTimer));
   const icon = nativeImage.createFromPath(path.join(directory, '../assets/tray.png')); icon.setTemplateImage(true);
   tray = new Tray(icon); tray.on('click', show); updateTray();
-  Menu.setApplicationMenu(Menu.buildFromTemplate([
-    { label: 'BranchDeck', submenu: [{ role: 'about' }, { type: 'separator' }, { label: '显示主窗口', accelerator: 'CmdOrCtrl+Shift+B', click: show }, { role: 'hide' }, { type: 'separator' }, { label: '退出…', accelerator: 'CmdOrCtrl+Q', click: () => app.quit() }] },
-    { label: '编辑', submenu: [{ role: 'undo' }, { role: 'redo' }, { type: 'separator' }, { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' }] },
-    { label: '窗口', submenu: [{ role: 'minimize' }, { role: 'zoom' }, { label: '显示主窗口', click: show }] }
-  ]));
+  function updateMenus() { Menu.setApplicationMenu(Menu.buildFromTemplate([
+    { label: 'BranchDeck', submenu: [{ role: 'about' }, { type: 'separator' }, { label: text('显示主窗口', 'Show main window'), accelerator: 'CmdOrCtrl+Shift+B', click: show }, { role: 'hide' }, { type: 'separator' }, { label: text('退出…', 'Quit…'), accelerator: 'CmdOrCtrl+Q', click: () => app.quit() }] },
+    { label: text('编辑', 'Edit'), submenu: [{ role: 'undo' }, { role: 'redo' }, { type: 'separator' }, { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' }] },
+    { label: text('窗口', 'Window'), submenu: [{ role: 'minimize' }, { role: 'zoom' }, { label: text('显示主窗口', 'Show main window'), click: show }] }
+  ])); }
+  updateMenus();
   app.on('activate', show); app.on('second-instance', show);
   app.on('before-quit', event => {
     if (quitting) return;
     event.preventDefault();
     if (quitDialog||folderTrash.busy) return;
-    if (manager.pending.size||sessions.initializing.size) { show(); dialog.showMessageBox(window, { message: '正在检查启动配置，请稍后退出。' }); return; }
+    if (manager.pending.size||sessions.initializing.size) { show(); dialog.showMessageBox(window, { message: text('正在检查启动配置，请稍后退出。', 'Checking launch configuration. Please try quitting again shortly.') }); return; }
     quitDialog = true;
     (async () => {
       if (manager.children.size||sessions.list().some(s=>s.busy||s.draft)) {
-        const result = await dialog.showMessageBox(window, { type: 'question', buttons: ['取消', '停止全部并退出'], defaultId: 0, cancelId: 0, message: '仍有终端正在运行程序或有未提交的输入', detail: '关闭窗口可以保留服务在菜单栏运行。退出应用会停止本应用启动的所有实例。' });
+        const result = await dialog.showMessageBox(window, { type: 'question', buttons: [text('取消', 'Cancel'), text('停止全部并退出', 'Stop all and quit')], defaultId: 0, cancelId: 0, message: text('仍有终端正在运行程序或有未提交的输入', 'Terminals are running programs or contain unfinished input'), detail: text('关闭窗口可以保留服务在菜单栏运行。退出应用会停止本应用启动的所有实例。', 'Close the window to keep services running in the menu bar. Quitting stops all terminals and services launched by this app.') });
         if (result.response !== 1) return;
       }
       await sessions.stopAll(); await manager.stopAll(); quitting = true; app.quit();
-    })().catch(error => dialog.showErrorBox('无法安全退出', error.message)).finally(() => { quitDialog = false; });
+    })().catch(error => dialog.showErrorBox(text('无法安全退出', 'Unable to quit safely'), error.message)).finally(() => { quitDialog = false; });
   });
 }

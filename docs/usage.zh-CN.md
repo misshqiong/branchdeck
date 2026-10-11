@@ -67,10 +67,11 @@ open release/mac-arm64/BranchDeck.app
 
 ## 自动发现范围
 
-仅在本地读取项目元数据，不读取对话正文，不修改 Codex / Claude Code 的配置或数据库。
+自动发现仅提取目录元数据：会话文件有读取边界，不从正文推断路径，不修改 Codex / Claude Code 的配置或数据库。
 
 - Codex：保存的工作区、local-projects、目录提示、SQLite 项目目录 / 未归档会话 cwd，以及 `.codex/worktrees`。
-- Claude Code：`.claude.json` 的 projects 路径、已有 sessions-index 的 projectPath、项目内 `.claude/worktrees`。
+- Claude Desktop：仅发现 `~/Library/Application Support/Claude/local-agent-mode-sessions/<账户>/<空间>/local_<会话>/outputs` 中非空的输出目录，标为「Claude 生成文件」。跳过应用缓存、运行环境、上传目录和空输出目录；不读取会话正文或登录数据库。
+- Claude Code：`.claude.json` 的 projects 路径、已有 sessions-index 的 projectPath、`projects/*/*.jsonl` 顶层 cwd、会话 scratchpadDirectory / outputFile 和工具调用引用的现存临时目录，以及项目内 `.claude/worktrees`。支持 `CLAUDE_CONFIG_DIR` 自定义缓存位置。
 - Git：只读 `worktree list`、仓库根目录、当前分支与提交；同一路径通过 realpath 去重，多来源显示在同一项。
 - 通用目录：读取 `~/code`、`~/Projects`、`~/Developer`、`~/Documents/code`、`~/Documents/Projects`（大小写均识别）的两层子目录，最多检查 300 个目录，以项目配置或 Git 标记确认。
 - 终端路径：从明确的 `cd /绝对路径` 或 `git -C` 寻找现存项目；不据此给后面的命令猜测执行目录。
@@ -129,3 +130,36 @@ node scripts/lifecycle-smoke.mjs
 仓库仅包含源码、依赖锁文件、应用图标、说明文档及使用临时数据的测试。首次启动不预置个人项目或命令。工作区路径、Shell 历史、命令配置、环境变量和运行日志由应用在本机读取或生成，不作为仓库内容分发。
 
 依赖、构建目录、各版本安装包、测试截图、本地验收记录、环境文件及凭据文件已加入 `.gitignore`。提交前仍应检查 `git diff --cached`，避免将个人路径、内网地址或密钥写进源码和示例。测试生成的截图仅供本地验收。
+
+## Claude 本地会话与缓存文件
+
+选中工作区，在右侧「Claude 会话」标签中浏览会话记录、`memory` 记忆文档及关联缓存文本文件。支持文件名搜索、类型筛选和刷新。嵌套 worktree 的会话优先归入自身。
+
+- 默认扫描 `~/.claude/projects`，不扫描 Claude Desktop 的私有数据库。索引缺失时，从 JSONL 的顶层 `cwd` 补充发现目录，不将对话提及的路径当成项目。
+- 列表只返回文件名、大小、时间等元数据。点击文件后展示原始文本；JSONL 不执行或渲染其中的 HTML、工具调用。
+- 每页最多 128 KiB，通过上一页、下一页读取大文件。内容不上传，也不复制到应用配置文件。
+- 扫描最多 500 个项目缓存目录、5000 个目录项、每个缓存目录下 4 层子目录，提取元数据总计最多读取 32 MiB；单个会话最多读取开头和结尾各 4 MiB。达到限制会提示，部分文件可能未显示。
+- 不跟随缓存符号链接。无法访问、已删除或未能关联到实际项目目录的记录不会作为可浏览文件展示。权限受限版本需同时授权项目和 Claude 缓存目录。
+- 会话可能包含敏感信息，分享截图或反馈前请自行检查。
+
+缓存结构参考 [Claude 会话文档](https://code.claude.com/docs/en/sessions) 和 [记忆文档](https://code.claude.com/docs/en/memory)。该功能为当前源码新增能力，已有 0.10.1 下载包不包含此面板。
+
+### 会话临时生成目录
+
+扫描会话记录中的 `attachment.snapshot.scratchpadDirectory`、工具输出 `outputFile`、工具调用的文件路径及命令中的字面临时路径。只纳入系统临时目录范围内、仍存在且可访问的具体目录；不执行命令、不展开变量、不从普通对话文字推测目录，也不把整个 `/tmp` 加入工作区。
+
+发现结果在左栏标为「Claude 临时目录」，即使没有 Git 或 package.json 也能显示。选择目录后可在「文件」中浏览产物，或用 Finder 打开。包含关系去重；已清理的临时路径会给出提示。工具引用只能证明会话使用过该路径，不能证明每个文件都由 Claude 创建。
+
+### Claude Desktop 聊天下载缓存恢复
+
+`outputs` 仅覆盖 Cowork 文件；普通聊天的下载和正文可能位于 Chromium HTTP 缓存中。点击左侧「扫描 Claude 聊天缓存」即可开始。后台提取完成后，应用会显示恢复数量，自动将结果加入工作区并打开恢复索引；失败时可在界面重试。无需终端命令。每次扫描保存一个独立快照，不自动覆盖旧快照，也不定时提取。结果保存在应用数据目录的 `Claude Chat Archive/Claude Chats 日期-*` 中。开发者仍可使用 Node.js 24 运行 `node scripts/recover-claude-chat.mjs`。
+
+恢复范围包括缓存中的聊天正文、会话标题/摘要索引、下载文件、附件预览、Artifact 项目文件、项目资料，以及 Cowork 输入/输出和本地消息记录。聊天保存为 Markdown 和 JSON；消息中的附件、工具调用及分支关联保留，运行统计和审计噪声不进入本地会话正文。`INDEX.md` 提供目录，`manifest.json` 保留文件哈希和来源。同类同内容文件去重，历史缓存版本可并存。
+
+只导出命中白名单的内容，不读取 Cookie、令牌存储或账号状态；不导出 HTTP 头和缓存请求 URL，不联网补取，不执行恢复的代码。产物保存在仓库外的私有目录，请勿提交到 Git。缓存快照不等于完整云端聊天：索引可能没有正文，附件可能只有预览，错误响应和空 Artifact 列表不算恢复内容。单文件上限 128 MiB，本地会话遍历上限 30,000 项；遇到解析失败或限制会记录在清单中。
+
+### 文件预览
+
+「文件」面板现在支持图片（含 SVG）、PDF 翻页/缩放、Markdown 排版、HTML 静态阅读、XLSX 工作表切换、CSV/TSV 表格和 JSON 格式化。Markdown/HTML 可显示同一工作区中的相对路径图片（最多 20 张、合计 16 MiB）；不运行脚本、不加载外部资源或打开文档中的链接。
+
+大文本按 UTF-8 字节边界分页，每段最多 256 KiB（HTML 每段最多 2 MiB）；可用「上一段 / 下一段」继续读取。超过一段的 CSV 按文本分页，避免在半条记录处分割后产生错误表格。表格预览每张最多 1,000 行、100 列，公式使用已保存结果，不重新计算。图片、PDF、XLSX 内置预览上限 32 MiB；不支持的二进制文件可通过「在 Finder 中显示」打开对应应用。

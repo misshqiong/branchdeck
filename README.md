@@ -30,7 +30,7 @@ Open a worktree, start its dev server, run a test in another terminal, then swit
 
 BranchDeck reads local project metadata from **Codex** and **Claude Code**, and uses **Git worktree** information to connect related checkouts. It also finds projects in common development folders and supports manually adding a directory.
 
-Discovery reads project metadata, not conversation bodies, and does not modify the coding tools' configuration or databases. BranchDeck manages the local workspaces and terminals around those tools; it does not run or coordinate their AI conversations.
+Discovery extracts directory metadata from project indexes and bounded Claude session records; it never infers paths from conversation text or modifies the coding tools' configuration or databases. The **Claude sessions** tab lets you explicitly open associated local transcripts, memory documents, and cached text files in a read-only, paginated viewer. Contents stay local and are not executed. Existing scratchpads and temporary output directories referenced by Claude tool records are also discovered as **Claude temporary folders**, ready to browse from the Files tab. BranchDeck manages the local workspaces and terminals around those tools; it does not run or coordinate their AI conversations.
 
 ### Shortcuts that fit the project
 
@@ -60,7 +60,7 @@ open release/mac-arm64/BranchDeck.app
 
 The path above is for Apple Silicon; Intel builds use `release/mac`. Packaging requires the Developer ID Application certificate and private key in the local keychain; select it using the `CSC_NAME` environment variable. Builds fail if the signing identity is unavailable.
 
-Run `npm run dist` to create signed DMG and ZIP artifacts. Apple notarization requires separate credentials; without them, artifacts are signed but not notarized. See the [macOS signing and packaging guide (Chinese)](docs/macos-signing.md). The app interface is currently in Chinese; this README provides an English introduction.
+Run `npm run dist` to create signed DMG and ZIP artifacts. Apple notarization requires separate credentials; without them, artifacts are signed but not notarized. See the [macOS signing and packaging guide (Chinese)](docs/macos-signing.md). The app supports English and Simplified Chinese; switch languages in Settings.
 
 The separate store build uses `npm run pack:mas:dev` for sandbox testing and `npm run pack:mas` for a store installer. It supports user-selected locations and persistent access bookmarks. See the [Mac App Store build guide (Chinese)](docs/mac-app-store.md) for signing requirements and sandbox acceptance checks.
 
@@ -81,7 +81,7 @@ Closing the window keeps the app in the menu bar. Fully quitting closes its term
 
 ## Local data and privacy
 
-Workspace discovery and shell-history processing happen on your machine. BranchDeck does not upload that history or read coding conversation bodies. Saved commands, preferences, and service logs live in `~/Library/Application Support/BranchDeck/`.
+Workspace discovery and shell-history processing happen on your machine. BranchDeck does not upload that history. Claude session browsing and the optional chat-cache recovery read locally available content; recovered snapshots remain on your Mac. Saved commands, preferences, and service logs live in `~/Library/Application Support/BranchDeck/`.
 
 The repository contains source code, icons, documentation, and tests with temporary fixtures. Personal workspace lists, shell history, logs, screenshots, environment files, and packaged builds are excluded from version control.
 
@@ -103,3 +103,10 @@ Current scope: local macOS workspaces and interactive zsh terminals. Windows, re
 ## License and contributions
 
 Licensed under [MIT](LICENSE). Fork the repository to build your own version, or propose improvements through a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for local development and contribution steps.
+
+## New in 0.11
+
+- One-click Claude local chat-cache recovery with categories for downloads, attachments, chat content, media, and Cowork files. Each scan creates a separate local snapshot and does not retrieve cloud history.
+- Click a result category to browse its files; copy its save location or open it in Finder.
+- Preview PDF, XLSX, CSV, images, Markdown, HTML, JSON, and text files. Active HTML content is disabled.
+- English and Simplified Chinese interfaces.

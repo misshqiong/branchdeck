@@ -64,3 +64,7 @@ The website now leads with unified local Codex / Claude Code project directories
 `website/assets/branches-and-commands.jpg` is a real screenshot of the packaged 0.10.1 application running with isolated fictional projects (`orbit-web`, `atlas-api`) and neutral temporary paths. The application code was unchanged; a separate local bundle identity isolated the capture instance. The selected feature/search checkout ran its real npm test shortcut successfully. The public installer was not modified.
 
 Product Hunt tagline, description, gallery and maker comment were synchronized to this positioning on 2026-10-11. The gallery now uses three actual app screenshots: project/branch groups, workspace command configuration, and feature-branch test output. See `launch/product-hunt/listing.json` for the submitted text.
+
+## 0.11.0 update
+
+Release material now includes English and Simplified Chinese, one-click Claude local-cache recovery, category browsing, and document previews. The added gallery screenshot uses isolated fictional cache data; it does not show real chats, account details, or user paths. The original three workflow screenshots remain representative of the project/branch/command workflow. See `releases-0.11.md` for the release review.
