@@ -6,7 +6,7 @@ Product page: https://www.producthunt.com/products/branchdeck?launch=branchdeck
 
 Pricing: Free. Public feedback: https://github.com/misshqiong/branchdeck/issues.
 
-Upload bundle: `launch/product-hunt/` contains the product icon, three actual app screenshots, and the submitted listing fields. The current gallery uses isolated fictional projects and neutral paths. The download remains the reviewed, signed and notarized Chinese-interface 0.10.1 build; local English UI changes are not included.
+Upload bundle: `launch/product-hunt/` contains the product icon, four actual app screenshots, and the submitted listing fields. The current gallery uses isolated fictional projects and neutral paths. The 0.11.0 release includes English and Simplified Chinese, local Claude cache recovery, and document previews. Public images use isolated fictional data.
 
 ## Listing copy
 
@@ -28,7 +28,7 @@ I built BranchDeck because working across several repositories and worktrees lef
 - Homepage, walkthrough interaction, GitHub Issues feedback link, installer response and checksum file were verified through the public domain. Origin installer hashes match the reviewed artifacts.
 - Product Hunt required fields were 100% complete before scheduling; Developer Tools and Productivity tags and Free pricing were selected.
 - Names, paths and image metadata in the upload bundle were reviewed. Examples use fictional repositories.
-- Future improvement: finish and verify the English UI, then build and notarize a matching release. Do not describe the current installer as English.
+- English and Simplified Chinese are included in 0.11.0.
 - Future improvement: add real app screenshots or a demo video using fictional data.
 - Do not promise session recovery after quitting or AI conversation orchestration.
 
@@ -52,7 +52,7 @@ Editorial self-assessment: **95/100 for the introduction page**, not a product-r
 | Positioning | 20/20 | First screen names the worktree workflow, audience, platform, and concrete benefit. |
 | Differentiation | 19/20 | Explains checkout discovery, project shortcuts, and terminal continuity; value still needs validation with actual users. |
 | Demonstration | 18/20 | Interactive three-step project switch, explicitly labeled as an illustration; actual app footage would provide stronger evidence. |
-| Download transparency | 19/20 | Version, architecture, Chinese UI, signed distribution, checksums, setup and session limits are disclosed. Public HTTPS domain and owner-approved GitHub Issues feedback link are configured. |
+| Download transparency | 19/20 | Version, architecture, supported languages, signed distribution, checksums, setup and session limits are disclosed. Public HTTPS domain and owner-approved GitHub Issues feedback link are configured. |
 | Readability and interaction | 19/20 | Desktop and narrow-screen layouts checked, walkthrough click and keyboard paths verified, semantic headings and live status added. No independent accessibility audit. |
 
 The page intentionally makes no adoption, time-saved, or testimonial claims. The interactive example executes no commands. Public website text contains only fictional project names and neutral paths.
@@ -68,3 +68,5 @@ Product Hunt tagline, description, gallery and maker comment were synchronized t
 ## 0.11.0 update
 
 Release material now includes English and Simplified Chinese, one-click Claude local-cache recovery, category browsing, and document previews. The added gallery screenshot uses isolated fictional cache data; it does not show real chats, account details, or user paths. The original three workflow screenshots remain representative of the project/branch/command workflow. See `releases-0.11.md` for the release review.
+
+Publication verified on 2026-10-11: GitHub Release v0.11.0 is public with DMG, ZIP, and SHA256SUMS.txt. Both installers passed Apple notarization and Gatekeeper checks. Production serves the 0.11.0 page and matching origin download hashes. Product Hunt saved the new description, fourth gallery image, and updated maker comment; its original October 11 at 00:01 PDT schedule remains unchanged.
