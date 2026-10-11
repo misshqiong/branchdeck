@@ -56,3 +56,11 @@ Editorial self-assessment: **95/100 for the introduction page**, not a product-r
 | Readability and interaction | 19/20 | Desktop and narrow-screen layouts checked, walkthrough click and keyboard paths verified, semantic headings and live status added. No independent accessibility audit. |
 
 The page intentionally makes no adoption, time-saved, or testimonial claims. The interactive example executes no commands. Public website text contains only fictional project names and neutral paths.
+
+## Website positioning update — 2026-10-11
+
+The website now leads with unified local Codex / Claude Code project directories, repository groups, branch checkouts and workspace-specific shortcut commands. Terminal continuity is a supporting benefit. Commands are described as directory-bound rather than automatically following Git branch names.
+
+`website/assets/branches-and-commands.jpg` is a real screenshot of the packaged 0.10.1 application running with isolated fictional projects (`orbit-web`, `atlas-api`) and neutral temporary paths. The application code was unchanged; a separate local bundle identity isolated the capture instance. The selected feature/search checkout ran its real npm test shortcut successfully. The public installer was not modified.
+
+The Product Hunt listing remains the previously submitted version; this positioning update applies to the website.

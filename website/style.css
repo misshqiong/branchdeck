@@ -23,3 +23,11 @@
  .demo-bottom{gap:8px}
 }
 @media(max-width:370px){header .brand{font-size:17px;gap:7px}header .brand img{width:26px;height:26px}header nav{gap:10px}header .nav-download{padding:7px 9px}header nav a{font-size:10px}}
+
+/* Real app evidence and the project / branch / command hierarchy. */
+.app-preview{border-bottom:1px solid var(--line)}
+.app-shot{margin:30px 0 0}.app-shot a{display:block}.app-shot img{display:block;width:100%;height:auto;border:1px solid #cdd9c5;border-radius:12px;box-shadow:0 16px 48px #193a2f14}
+.app-shot figcaption{font-size:11px;color:var(--muted);margin-top:12px}
+.shot-key{display:grid;grid-template-columns:repeat(3,1fr);gap:30px;margin-top:20px}.shot-key p{font-size:13px;color:var(--muted)}.shot-key strong{display:block;color:var(--green);font-size:14px;margin-bottom:6px}
+.scope-note{font-size:12px;color:var(--muted);max-width:840px;line-height:1.8;margin:18px 0 0}
+@media(max-width:760px){.shot-key{grid-template-columns:1fr;gap:0}.app-shot{margin-top:22px}.app-shot img{border-radius:7px}}

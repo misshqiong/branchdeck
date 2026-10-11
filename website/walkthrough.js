@@ -1,8 +1,8 @@
 // Illustration only: switching steps never executes commands or contacts a service.
 const steps = [
-  { workspace: 'main', branch: 'main', path: '~/Projects/orbit-web', command: 'npm run dev', badge: 'DEV SERVER', tab: 'dev server', state: 'RUNNING', output: '$ npm run dev\n\nLocal: http://localhost:5173/\n\nReady. Watching for changes.', caption: 'Main has its own dev process. It stays running when you switch workspaces.' },
-  { workspace: 'feature', branch: 'feature/search', path: '~/Projects/orbit-web-search', command: 'npm test', badge: 'FEATURE WORKTREE', tab: 'zsh · tests', state: 'FINISHED', output: '$ npm test\n\n✓ filters results by query\n✓ clears the search field\n\n2 tests passed.\n$', caption: 'The feature worktree has its own directory and terminal. Main’s dev process keeps running.' },
-  { workspace: 'main', branch: 'main', path: '~/Projects/orbit-web', command: 'npm run dev', badge: 'BACK ON MAIN', tab: 'dev server', state: 'STILL RUNNING', output: '$ npm run dev\n\nLocal: http://localhost:5173/\n\nReady. Watching for changes.', caption: 'You are back at the same running dev process. No need to start it again.' }
+  { workspace: 'main', branch: 'main', path: '~/Projects/orbit-web', command: 'npm run dev', badge: 'DEV SERVER', tab: 'dev server', state: 'RUNNING', output: '$ npm run dev\n\nLocal: http://localhost:5173/\n\nReady. Watching for changes.', caption: 'Select main to find its own directory and development command.' },
+  { workspace: 'feature', branch: 'feature/search', path: '~/Projects/orbit-web-search', command: 'npm test', badge: 'FEATURE WORKTREE', tab: 'zsh · tests', state: 'FINISHED', output: '$ npm test\n\n✓ filters results by query\n✓ clears the search field\n\n2 tests passed.\n$', caption: 'Select feature/search: its test command runs in the feature checkout, not main.' },
+  { workspace: 'main', branch: 'main', path: '~/Projects/orbit-web', command: 'npm run dev', badge: 'BACK ON MAIN', tab: 'dev server', state: 'STILL RUNNING', output: '$ npm run dev\n\nLocal: http://localhost:5173/\n\nReady. Watching for changes.', caption: 'Return to main: its shortcuts and running terminal are still together.' }
 ];
 let current = 0;
 const buttons = [...document.querySelectorAll('[data-step]')];

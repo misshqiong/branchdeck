@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BranchDeck — Keep every worktree in context</title>
-  <meta name="description" content="A macOS workspace for developers juggling Codex, Claude Code, and Git worktrees. Find the right checkout, keep useful commands nearby, and return to running terminals.">
+  <title>BranchDeck — Your AI projects, branches & commands</title>
+  <meta name="description" content="Bring local Codex and Claude Code projects into one macOS workspace. Organize their branch checkouts and keep shortcut commands with the right directory.">
   <meta name="theme-color" content="#173e31">
-  <meta property="og:title" content="BranchDeck — Keep every worktree in context">
-  <meta property="og:description" content="Your checkout, commands, and running terminals. Together, even when you switch projects.">
+  <meta property="og:title" content="BranchDeck — Your AI projects, branches & commands">
+  <meta property="og:description" content="Local AI projects, branch checkouts, and shortcut commands — together in one macOS app.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://branchdeck.rabbitmoon.app/">
   <link rel="canonical" href="https://branchdeck.rabbitmoon.app/">
   <link rel="icon" href="assets/icon.png">
-  <link rel="stylesheet" href="style.css">
-  <script src="walkthrough.js" defer></script>
+  <link rel="stylesheet" href="style.css?v=20261011-branches">
+  <script src="walkthrough.js?v=20261011-branches" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
@@ -24,33 +24,40 @@
 <main id="main">
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero-copy">
-      <p class="eyebrow">FOR DEVELOPERS WORKING ACROSS WORKTREES</p>
-      <h1 id="hero-title">Switch worktrees.<br>Keep your place.</h1>
-      <p class="lead">Find the right checkout.<br>Come back to a running terminal.</p>
-      <p class="intro">Working with Codex, Claude Code, and several Git worktrees? BranchDeck brings each local checkout, its useful commands, and its terminals into one macOS workspace.</p>
-      <div class="hero-actions"><a class="button" href="#download">Try the Mac preview <span aria-hidden="true">↓</span></a><a class="text-link" href="#workflow">Walk through a project switch <span aria-hidden="true">→</span></a></div>
+      <p class="eyebrow">ONE HOME FOR YOUR LOCAL AI PROJECTS</p>
+      <h1 id="hero-title">Every project.<br>Every branch.<br>Its commands.</h1>
+      <p class="lead">Your Codex and Claude Code projects,<br>organized in one place.</p>
+      <p class="intro">Bring scattered local AI project directories together. Browse each project’s branch checkouts and worktrees, then find and run the shortcut commands saved for that workspace.</p>
+      <div class="hero-actions"><a class="button" href="#download">Try the Mac preview <span aria-hidden="true">↓</span></a><a class="text-link" href="#app-preview">See branches and commands together <span aria-hidden="true">→</span></a></div>
       <p class="release-note">Apple Silicon · v0.10.1 · <strong>Chinese interface</strong></p>
     </div>
     <div class="context-map" aria-label="One repository with two worktrees, each with its own commands and terminals">
-      <div class="map-heading"><span class="map-mark" aria-hidden="true">⌘</span><span>ONE REPO. SEVERAL THREADS OF WORK.</span></div>
-      <div class="repo-root"><span class="folder-symbol" aria-hidden="true">▱</span><div><strong>orbit-web</strong><small>YOUR LOCAL REPOSITORY</small></div></div>
+      <div class="map-heading"><span class="map-mark" aria-hidden="true">⌘</span><span>PROJECT → BRANCH → SHORTCUTS</span></div>
+      <div class="repo-root"><span class="folder-symbol" aria-hidden="true">▱</span><div><strong>orbit-web</strong><small>LOCAL CODEX PROJECT</small></div></div>
       <div class="branch-lines">
-        <div class="branch-card active"><div class="branch-title"><span class="branch-symbol" aria-hidden="true">↳</span><strong>main</strong><span class="status"><i></i>dev running</span></div><div class="context-pills"><span>npm run dev</span><span>zsh · ready</span></div></div>
-        <div class="branch-card"><div class="branch-title"><span class="branch-symbol" aria-hidden="true">↳</span><strong>feature/search</strong><span class="branch-label">WORKTREE</span></div><div class="context-pills"><span>npm test</span><span>zsh · ready</span></div></div>
+        <div class="branch-card active"><div class="branch-title"><span class="branch-symbol" aria-hidden="true">↳</span><strong>main</strong><span class="status"><i></i>dev running</span></div><div class="context-pills"><span>npm run dev</span><span>npm run build</span></div></div>
+        <div class="branch-card"><div class="branch-title"><span class="branch-symbol" aria-hidden="true">↳</span><strong>feature/search</strong><span class="branch-label">WORKTREE</span></div><div class="context-pills"><span>npm test</span><span>npm run lint</span></div></div>
       </div>
-      <div class="map-caption"><span aria-hidden="true">↔</span> Switch the workspace. Keep its terminals.</div>
+      <div class="map-caption"><span aria-hidden="true">↔</span> Choose a branch checkout. Find its commands.</div>
       <p class="illustration">Concept illustration using a fictional project.</p>
     </div>
   </section>
-  <div class="context-strip" aria-label="Product essentials"><span>Works alongside <strong>Codex & Claude Code</strong></span><span>Built around <strong>Git worktrees</strong></span><span>Runs locally. <strong>No BranchDeck account.</strong></span></div>
+  <div class="context-strip" aria-label="Product essentials"><span>Bring together <strong>Codex & Claude Code projects</strong></span><span>Organize <strong>branches & shortcuts</strong></span><span>Runs locally. <strong>No BranchDeck account.</strong></span></div>
+
+  <section id="app-preview" class="section app-preview" aria-labelledby="preview-title">
+    <div class="section-heading"><p class="eyebrow">INSIDE THE APP</p><h2 id="preview-title">Projects on the left.<br>Branch commands beside them.</h2><p>A real local run of BranchDeck 0.10.1, using isolated fictional projects. The current app interface is Chinese.</p></div>
+    <figure class="app-shot"><a href="assets/branches-and-commands.jpg" aria-label="Open full-size BranchDeck screenshot"><img src="assets/branches-and-commands.jpg" alt="BranchDeck running locally with orbit-web and atlas-api repositories, their branch worktrees, and shortcut commands for the selected checkout." width="1440" height="810" loading="lazy"></a><figcaption>Actual application · fictional repositories and neutral local paths · click to inspect full size.</figcaption></figure>
+    <div class="shot-key"><p><strong>01 · Project groups</strong>Related checkouts stay under their repository.</p><p><strong>02 · Branch context</strong>Select the branch’s local working directory.</p><p><strong>03 · Workspace shortcuts</strong>Keep test and build commands with that checkout.</p></div>
+    <p class="scope-note">BranchDeck organizes existing local branch checkouts and Git worktrees. Shortcut configurations belong to each workspace directory and stay with that directory when its checked-out branch changes.</p>
+  </section>
 
   <section id="workflow" class="walkthrough section" aria-labelledby="workflow-title">
-    <div class="section-heading"><p class="eyebrow">THE MOMENT IT HELPS</p><h2 id="workflow-title">Two checkouts.<br>One less thing to remember.</h2><p>Keep the main app running while you test a feature branch. Then return to the terminal you left.</p></div>
+    <div class="section-heading"><p class="eyebrow">THE MOMENT IT HELPS</p><h2 id="workflow-title">Pick the project.<br>Find the branch.<br>Run its command.</h2><p>The same repository can have several local checkouts. Each needs the right working directory and commands. Keep that context together as you move between them.</p></div>
     <div class="walkthrough-layout">
       <div class="steps" aria-label="Walkthrough steps">
-        <button class="step selected" type="button" data-step="0" aria-pressed="true" aria-controls="demo-view"><span class="step-number">01</span><span><strong>Start on main.</strong><span>Open the checkout and run its dev shortcut.</span></span></button>
-        <button class="step" type="button" data-step="1" aria-pressed="false" aria-controls="demo-view"><span class="step-number">02</span><span><strong>Switch to the feature.</strong><span>Use the worktree’s own directory and terminal.</span></span></button>
-        <button class="step" type="button" data-step="2" aria-pressed="false" aria-controls="demo-view"><span class="step-number">03</span><span><strong>Come back to main.</strong><span>The dev process is still there while the app runs.</span></span></button>
+        <button class="step selected" type="button" data-step="0" aria-pressed="true" aria-controls="demo-view"><span class="step-number">01</span><span><strong>Choose a branch checkout.</strong><span>Open main and find its development shortcut.</span></span></button>
+        <button class="step" type="button" data-step="1" aria-pressed="false" aria-controls="demo-view"><span class="step-number">02</span><span><strong>Use the feature’s commands.</strong><span>Select feature/search and run tests in its directory.</span></span></button>
+        <button class="step" type="button" data-step="2" aria-pressed="false" aria-controls="demo-view"><span class="step-number">03</span><span><strong>Return without rebuilding context.</strong><span>Main’s shortcuts and running terminal are still there.</span></span></button>
         <p class="demo-disclosure">Interactive illustration, not a live app or terminal. All project names and output are examples.</p>
         <noscript><p class="demo-disclosure">Enable JavaScript to switch between the illustrated steps.</p></noscript>
       </div>
@@ -62,27 +69,27 @@
 Local: http://localhost:5173/
 
 Ready. Watching for changes.</pre></div></div></div>
-        <div class="demo-bottom"><p id="demo-caption" role="status" aria-live="polite" aria-atomic="true">Main has its own dev process. It stays running when you switch workspaces.</p><button type="button" id="demo-next" aria-label="Next walkthrough step">Next step <span aria-hidden="true">→</span></button></div>
+        <div class="demo-bottom"><p id="demo-caption" role="status" aria-live="polite" aria-atomic="true">Select main to find its own directory and development command.</p><button type="button" id="demo-next" aria-label="Next walkthrough step">Next step <span aria-hidden="true">→</span></button></div>
       </div>
     </div>
     <p class="session-note">Sessions stay alive while BranchDeck is running. Fully quitting stops terminals and managed services; reopening does not restore them.</p>
   </section>
 
   <section id="fit" class="section fit-section" aria-labelledby="fit-title">
-    <div class="section-heading"><p class="eyebrow">WHY ADD IT TO YOUR SETUP?</p><h2 id="fit-title">A place for the work<br>between coding sessions.</h2><p>Your editor holds the code. BranchDeck keeps the checkout, repeatable commands, and running terminals together.</p></div>
+    <div class="section-heading"><p class="eyebrow">WHY ADD IT TO YOUR SETUP?</p><h2 id="fit-title">From scattered directories<br>to organized branch work.</h2><p>One view connects the local project, its branch checkouts, and the commands you use there.</p></div>
     <div class="features">
-      <article><span class="number">FIND THE CHECKOUT</span><h3>Which folder was that branch in?</h3><p>Discover projects from Codex and Claude Code metadata, local folders, and Git worktrees. See related checkouts together with their branch names.</p><p class="feature-result">Open the workspace you mean.</p></article>
-      <article><span class="number">REUSE THE COMMAND</span><h3>How did I start this one?</h3><p>Keep shortcuts from recognized project scripts and matching shell history. Review suggestions, edit the command, and choose when it runs.</p><p class="feature-result">Keep the command with the project.</p></article>
-      <article><span class="number">RETURN TO THE PROCESS</span><h3>Where is that dev server running?</h3><p>Return to the workspace’s terminal tabs and output. Services get dedicated tabs, and launching the same service again focuses its existing tab.</p><p class="feature-result">Get back to the process you started.</p></article>
+      <article><span class="number">01 · GATHER YOUR PROJECTS</span><h3>Codex here. Claude Code there.</h3><p>Discover local project directories from Codex and Claude Code metadata, or add a folder yourself. Related Git worktrees are grouped under their repository.</p><p class="feature-result">Find local AI projects in one list.</p></article>
+      <article><span class="number">02 · FIND THE BRANCH</span><h3>Which checkout has that feature?</h3><p>See branch names beside their local checkouts. Search for a directory or branch, select the workspace, and see the commands associated with that directory.</p><p class="feature-result">Keep the branch tied to its actual directory.</p></article>
+      <article><span class="number">03 · KEEP ITS SHORTCUTS</span><h3>How do I test or build this branch?</h3><p>Save commands per workspace, or review suggestions from project scripts and matching shell history. Launch tests, builds, or services in the selected checkout and see their output.</p><p class="feature-result">The right commands, beside the right checkout.</p></article>
     </div>
-    <div class="fit-note"><strong>Especially useful when you juggle several checkouts.</strong><p>If you mostly work in one repository and your existing terminal setup feels effortless, BranchDeck may add less value. It is built for the context switching that comes with parallel local work.</p></div>
+    <div class="fit-note"><strong>Built for parallel local AI development.</strong><p>A Codex project on main, a Claude Code project with a feature worktree, and different test or build commands in each: BranchDeck gives those local directories a shared place to organize them.</p></div>
   </section>
 
   <section class="local" aria-labelledby="local-title"><div><p class="eyebrow">YOUR SHELL. YOUR MACHINE.</p><h2 id="local-title">Close to your tools.<br>Local to your Mac.</h2></div><div><p>Use interactive zsh with your aliases, completion, and shell configuration. BranchDeck reads project metadata, not coding conversation bodies.</p><p>Workspace discovery and shell-history processing happen locally. Commands you execute can still access files and network services through your shell.</p><a class="text-link" href="privacy.html">How local data is handled <span aria-hidden="true">↗</span></a></div></section>
 
-  <section id="download" class="download section" aria-labelledby="download-title"><div><p class="eyebrow">TRY IT WITH TWO CHECKOUTS</p><h2 id="download-title">Bring your next<br>project switch here.</h2><p>Open a project, start its dev command, visit another worktree, and come back. See whether keeping those pieces together fits the way you work.</p><a class="text-link" href="support.html">Installation & getting started <span aria-hidden="true">↗</span></a></div><div class="download-card"><span class="preview-label">FREE MACOS PREVIEW</span><h3>BranchDeck <span>0.10.1</span></h3><dl><div><dt>Hardware</dt><dd>Apple Silicon Mac</dd></div><div><dt>Interface</dt><dd>简体中文 / Chinese</dd></div><div><dt>Distribution</dt><dd>Developer ID signed & notarized</dd></div></dl><a class="button" href="downloads/BranchDeck-0.10.1-arm64.dmg">Download DMG <span aria-hidden="true">↓</span></a><div class="download-alternatives"><a href="downloads/BranchDeck-0.10.1-arm64-mac.zip">ZIP archive</a><a href="downloads/SHA256SUMS.txt">SHA-256 checksums</a></div><p class="fine">English UI is in development and is not included in this download. Requires your existing shell and project tools. Distributed outside the Mac App Store.</p></div></section>
+  <section id="download" class="download section" aria-labelledby="download-title"><div><p class="eyebrow">START WITH YOUR LOCAL AI PROJECTS</p><h2 id="download-title">Find the branch.<br>Keep its commands.</h2><p>Open BranchDeck, find a Codex or Claude Code project, and select a branch checkout. Save a useful test or build command there, ready for your next visit.</p><a class="text-link" href="support.html">Installation & getting started <span aria-hidden="true">↗</span></a></div><div class="download-card"><span class="preview-label">FREE MACOS PREVIEW</span><h3>BranchDeck <span>0.10.1</span></h3><dl><div><dt>Hardware</dt><dd>Apple Silicon Mac</dd></div><div><dt>Interface</dt><dd>简体中文 / Chinese</dd></div><div><dt>Distribution</dt><dd>Developer ID signed & notarized</dd></div></dl><a class="button" href="downloads/BranchDeck-0.10.1-arm64.dmg">Download DMG <span aria-hidden="true">↓</span></a><div class="download-alternatives"><a href="downloads/BranchDeck-0.10.1-arm64-mac.zip">ZIP archive</a><a href="downloads/SHA256SUMS.txt">SHA-256 checksums</a></div><p class="fine">English UI is in development and is not included in this download. Requires your existing shell and project tools. Distributed outside the Mac App Store.</p></div></section>
 
   <section class="faq section" aria-labelledby="faq-title"><div class="section-heading"><p class="eyebrow">BEFORE YOU DOWNLOAD</p><h2 id="faq-title">A few clear boundaries.</h2></div><div class="faq-list"><details><summary>Does it run my Codex or Claude Code conversations?</summary><p>No. BranchDeck discovers local project metadata and organizes the surrounding workspaces, commands, and terminals. It does not read conversation bodies or coordinate AI agents.</p></details><details><summary>Will it execute commands from my history automatically?</summary><p>No. Discovery and import only prepare configuration or suggestions. You choose when to execute a command. History matching uses explicit directory information or unambiguous project configuration; it does not infer a directory from a previous cd command.</p></details><details><summary>What happens when I close the window or quit?</summary><p>Closing the window keeps BranchDeck in the menu bar with its sessions running. Fully quitting stops its terminals and managed services. Sessions are not restored and commands are not replayed on the next launch.</p></details><details><summary>Does it support Intel Macs, Windows, or remote workspaces?</summary><p>The download on this page is for Apple Silicon Macs. Windows and remote workspace management are outside the current scope. It uses local interactive zsh sessions.</p></details><details><summary>Do I need an account or a cloud connection?</summary><p>No BranchDeck account is required for local workspace discovery and terminal use. Your own commands and coding tools may need network access or their own accounts.</p></details></div></section>
 </main>
-<footer><a class="brand" href="./"><img src="assets/icon.png" alt="" width="24" height="24">BranchDeck</a><span>Keep every worktree in context.</span><div><a href="privacy.html">Privacy</a><a href="support.html">Help</a></div></footer>
+<footer><a class="brand" href="./"><img src="assets/icon.png" alt="" width="24" height="24">BranchDeck</a><span>Your projects. Their branches. The right commands.</span><div><a href="privacy.html">Privacy</a><a href="support.html">Help</a></div></footer>
 </body></html>
