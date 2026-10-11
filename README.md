@@ -99,3 +99,7 @@ npm run build
 Desktop smoke scripts in `scripts/` cover terminal interaction, command organization, workspace removal, history import, and lifecycle behavior using temporary fixtures. See the [detailed usage guide (Chinese)](docs/usage.zh-CN.md) for commands and configuration.
 
 Current scope: local macOS workspaces and interactive zsh terminals. Windows, remote workspaces, bash/fish session tracking, and multi-service dependency orchestration are not supported. Up to 32 terminal tabs can stay open during an app session.
+
+## License and contributions
+
+Licensed under [MIT](LICENSE). Fork the repository to build your own version, or propose improvements through a pull request. See [CONTRIBUTING.md](CONTRIBUTING.md) for local development and contribution steps.

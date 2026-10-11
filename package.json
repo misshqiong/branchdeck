@@ -64,5 +64,6 @@
     ],
     "afterPack": "./scripts/sanitize-package.cjs",
     "publish": null
-  }
+  },
+  "license": "MIT"
 }

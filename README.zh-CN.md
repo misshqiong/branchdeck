@@ -99,3 +99,7 @@ npm run build
 `scripts/` 中的桌面验收脚本使用临时数据，覆盖终端交互、命令整理、工作区移除、历史导入及生命周期。完整操作、匹配规则、配置和验收命令见[使用指南](docs/usage.zh-CN.md)。
 
 当前支持本地 macOS 工作区和交互式 zsh，单次应用会话最多保留 32 个终端标签。暂不支持 Windows、远程工作区、bash/fish 会话状态识别和多服务依赖编排。
+
+## 许可证与贡献
+
+本项目使用 [MIT 许可证](LICENSE)。你可以 Fork 后自行修改和运行，也可以通过 Pull Request 提交改进。开发环境与贡献步骤见 [CONTRIBUTING.md](CONTRIBUTING.md)。
