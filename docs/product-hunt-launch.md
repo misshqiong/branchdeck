@@ -6,7 +6,7 @@ Product page: https://www.producthunt.com/products/branchdeck?launch=branchdeck
 
 Pricing: Free. Owner-approved public support: https://github.com/misshqiong/branchdeck/issues.
 
-Upload bundle: `launch/product-hunt/` contains the product icon, three labeled concept illustrations, and the submitted listing fields. Gallery illustrations are not app screenshots. The download remains the reviewed, signed and notarized Chinese-interface 0.10.1 build; local English UI changes are not included.
+Upload bundle: `launch/product-hunt/` contains the product icon, three actual app screenshots, and the submitted listing fields. The current gallery uses isolated fictional projects and neutral paths. The download remains the reviewed, signed and notarized Chinese-interface 0.10.1 build; local English UI changes are not included.
 
 ## Listing copy
 
@@ -63,4 +63,4 @@ The website now leads with unified local Codex / Claude Code project directories
 
 `website/assets/branches-and-commands.jpg` is a real screenshot of the packaged 0.10.1 application running with isolated fictional projects (`orbit-web`, `atlas-api`) and neutral temporary paths. The application code was unchanged; a separate local bundle identity isolated the capture instance. The selected feature/search checkout ran its real npm test shortcut successfully. The public installer was not modified.
 
-The Product Hunt listing remains the previously submitted version; this positioning update applies to the website.
+Product Hunt tagline, description, gallery and maker comment were synchronized to this positioning on 2026-10-11. The gallery now uses three actual app screenshots: project/branch groups, workspace command configuration, and feature-branch test output. See `launch/product-hunt/listing.json` for the submitted text.

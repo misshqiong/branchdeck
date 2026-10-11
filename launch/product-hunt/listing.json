@@ -1,7 +1,7 @@
 {
   "name": "BranchDeck",
-  "tagline": "Keep your worktrees, commands, and terminals in context",
-  "description": "Juggling Codex, Claude Code, and several Git worktrees? BranchDeck keeps each local checkout, useful commands, and running terminals together on macOS. Find the right workspace, test a feature, and return to your dev server while the app stays running. Discovery happens locally; no BranchDeck account required. Free preview for Apple Silicon Macs. Current interface: Chinese.",
+  "tagline": "Your local AI projects, branches, and shortcut commands",
+  "description": "Bring local Codex and Claude Code projects into one macOS workspace. Group related Git worktrees, find each branch checkout, and keep test, build, and dev shortcuts with its directory. Select a workspace to see its commands and terminal output. Local discovery; no BranchDeck account. Free preview for Apple Silicon Macs, with a Chinese interface. Gallery: real app screenshots using fictional projects.",
   "website": "https://branchdeck.rabbitmoon.app",
   "pricing": "Free",
   "support": "https://github.com/misshqiong/branchdeck/issues",
@@ -11,11 +11,12 @@
   ],
   "thumbnail": "thumbnail.png",
   "gallery": [
-    "01-workspaces.png",
-    "02-commands.png",
-    "03-terminals.png"
+    "01-project-branches.jpg",
+    "02-workspace-shortcuts.jpg",
+    "03-branch-test-output.jpg"
   ],
   "status": "Successfully scheduled on Product Hunt for 2026-10-11 at 00:01 America/Los_Angeles (15:01 Asia/Shanghai).",
   "productHuntUrl": "https://www.producthunt.com/products/branchdeck?launch=branchdeck",
-  "scheduledAt": "2026-10-11T07:01:00Z"
+  "scheduledAt": "2026-10-11T07:01:00Z",
+  "makerComment": "I built BranchDeck to organize the local project directories left across Codex, Claude Code, and parallel Git worktrees. The core is simple: project → branch checkout → useful commands. Find a repository, select its local branch workspace, and keep test, build, or dev shortcuts beside that directory. Commands belong to workspace directories; they do not automatically follow a branch name when you check out something else. The gallery shows the real app with fictional projects. This free preview is for Apple Silicon Macs and currently has a Chinese interface. Which part of managing your local AI projects and branch commands would you improve first?"
 }
